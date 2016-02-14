@@ -40,7 +40,7 @@ In order to take action on the added schools, you have to manually assign them a
 The name of the school in schools.json is only shown as information to the user, to judge
 whether a school shall be assigend a 0 or a 1, but is not used by the program.
 
-== Photo collages ==
+## Photo collages
 
 PATinderBot will automatically create photo collages with relevant information of the user in 
 the folder img, which is not in the Git repository. It will be created automatically.
