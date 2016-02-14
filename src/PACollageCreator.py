@@ -1,7 +1,19 @@
 '''
-Created on Mar 19, 2015
+PATinderBot: automatically like and capture Tinder recommendations
+Copyright (C) 2016  physicalattraction
 
-@author: Erwin Rossen
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from PIL import Image, ImageFont, ImageDraw
@@ -11,9 +23,9 @@ import requests
 import math
 
 
-class CollageCreator(object):
+class PACollageCreator(object):
     '''
-    Class that creates a collage based on a TinderUser
+    Class that creates a collage based on a PATinderUser
     '''
 
     def __init__(self):
@@ -154,10 +166,10 @@ class CollageCreator(object):
             os.mkdir(directory)
 
     def __get_img_root_dir(self):
-        '''Return a string which contains the root ERTinderBot img directory.
+        '''Return a string which contains the root PATinderBot img directory.
 
         Current directory structure:
-        ERTinderBot
+        PATinderBot
             src
                 CollageCreator
             img
@@ -171,7 +183,7 @@ class CollageCreator(object):
         return img_root_dir
 
     def __get_img_dir(self, status):
-        '''Return a string which contains the ERTinderBot img directory for the given status.'''
+        '''Return a string which contains the PATinderBot img directory for the given status.'''
         img_dir = os.path.join(self.__get_img_root_dir(), status)
         self.__ensure_dir_exists(img_dir)
         return img_dir

@@ -1,13 +1,25 @@
 '''
-Created on Feb 14, 2016
+PATinderBot: automatically like and capture Tinder recommendations
+Copyright (C) 2016  physicalattraction
 
-@author: physicalattraction
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from datetime import datetime
 
 
-class TinderUser(object):
+class PATinderUser(object):
 
     def __init__(self, data_dict):
         self.d = data_dict
@@ -73,6 +85,8 @@ class TinderUser(object):
         '''Return a list of schools. Each school is a dictionary with id and name.'''
         if 'schools' in self.d:
             return self.d.get('schools')
+        else:
+            return list()
 
     @property
     def school_names(self):
