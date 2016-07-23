@@ -195,4 +195,6 @@ class PATinderBot:
 
 if __name__ == '__main__':
     tinder_bot = PATinderBot()
-    tinder_bot.run_tinder_bot()
+    for i in range(30):
+        print('*** Run {} ***'.format(i + 1))
+        tinder_bot.run_tinder_bot()
