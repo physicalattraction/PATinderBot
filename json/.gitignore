@@ -1,2 +1,3 @@
-./schools.json
-./secrets.json
+*
+
+!.gitignore
