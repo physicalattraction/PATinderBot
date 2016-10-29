@@ -165,7 +165,7 @@ class PATinderBot:
         schools_file = 'schools.json'
         return os.path.join(self._get_json_dir(), schools_file)
 
-    def _get_facebook_auth_token_url(self):
+    def get_facebook_auth_token_url(self):
         url = 'https://www.facebook.com/v2.6/dialog/oauth'
         params = {
             'api_key': '464891386855067',  # Tinder's App ID
@@ -223,17 +223,17 @@ class PATinderBot:
         with open(schools_file) as f:
             schools = json.loads(f.read())
         schools.append({'id': school.get('id'),
-                        'name': school.get('name'),
+                        'name': school.get('name', None),
                         'status': 2})
         with open(schools_file, 'w') as outfile:
             json.dump(schools, outfile, indent=4)
 
 
 if __name__ == '__main__':
+    print('Visit this URL to retrieve your Facebook auth token:\n{}\n'.format(
+        PATinderBot.get_facebook_auth_token_url()))
+
     tinder_bot = PATinderBot()
-    print('Visit {} to retrieve your Facebook auth token'.format(
-        tinder_bot._get_facebook_auth_token_url()))
-    tinder_bot._get_tinder_auth_token()
     for i in range(30):
         print('*** Run {} ***'.format(i + 1))
         tinder_bot.run_tinder_bot()
