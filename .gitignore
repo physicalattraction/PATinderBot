@@ -63,3 +63,6 @@ target/
 
 # Image directory
 img/
+
+# IDE related stuff
+.idea/
