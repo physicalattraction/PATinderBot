@@ -211,6 +211,9 @@ class PATinderBot:
                 unique_school_ids.append(school_id)
                 unique_schools.append(school)
 
+        unique_schools = sorted(unique_schools, key=lambda k: k['id'])
+        unique_schools = sorted(unique_schools, key=lambda k: k['status'])
+
         with open(schools_file, 'w') as outfile:
             json.dump(unique_schools, outfile, indent=4)
 
