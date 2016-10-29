@@ -17,21 +17,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 import json
-import requests
-import sys
-from shutil import copyfile
-from pprint import pprint  # @UnusedImport
 from os.path import os
+import requests
+from shutil import copyfile
+import sys
 
 from PACollageCreator import PACollageCreator
 from PATinderUser import PATinderUser
 
 
 class PATinderBot:
-
     def __init__(self):
-        self.__read_secrets_file()
-        self.__read_schools_file()
+        self._read_secrets_file()
+        self._read_schools_file()
         self.headers = {
             'app_version': '3',
             'platform': 'ios'
@@ -63,7 +61,7 @@ class PATinderBot:
 
     def _recommendations(self):
         h = self.headers
-        h.update({'X-Auth-Token': self.__get_tinder_auth_token()})
+        h['X-Auth-Token'] = self._get_tinder_auth_token()
         r = requests.get('https://api.gotinder.com/user/recs', headers=h)
         if r.status_code == 401:
             raise Exception('HTTP Error 401 Unauthorized')
@@ -73,8 +71,10 @@ class PATinderBot:
         if 'results' not in r.json():
             print(r.json())
 
-        for result in r.json().get('results'):
-            yield PATinderUser(result)
+        results = r.json().get('results')
+        if results:
+            for result in results:
+                yield PATinderUser(result)
 
     def _like(self, user):
         print(' -> Like {} ({})'.format(user.name, user.id))
@@ -113,9 +113,10 @@ class PATinderBot:
             school_id = school.get('id')
             if school_id in self.schools:
                 if self.schools[school_id] == 1:
+                    print('Approved school: {}'.format(school.get('name')))
                     return 'like'
             else:
-                self.__update_schools(school)
+                self._update_schools(school)
                 unknown_school = True
         if unknown_school:
             return 'no_action'
@@ -129,61 +130,92 @@ class PATinderBot:
 
         collageCreator.create_collage(user, status)
 
-    def __read_secrets_file(self):
-        secrets_file = self.__get_secrets_file_name()
+    def _read_secrets_file(self):
+        secrets_file = self._get_secrets_file_name()
         with open(secrets_file) as f:
             self.secrets = json.loads(f.read())
 
-    def __read_schools_file(self):
+    def _read_schools_file(self):
         self.schools = dict()
-        schools_file = self.__get_schools_file_name()
+        schools_file = self._get_schools_file_name()
         if not os.path.isfile(schools_file):
             schools_template_file = 'schools_template.json'
             copyfile(schools_template_file, schools_file)
+
+        self._clean_schools_file()
         with open(schools_file) as f:
-            for school in json.loads(f.read()):
+            schools = json.loads(f.read())
+            for school in schools:
                 school_id = school.get('id')
                 if school_id in self.schools:
                     print('School with id {} occurs multiple times in {}'.
                           format(school_id, schools_file))
                 self.schools[school_id] = school.get('status')
 
-    def __get_json_dir(self):
+    def _get_json_dir(self):
         current_dir = os.path.dirname(__file__)
         json_dir = os.path.join(current_dir, '..', 'json')
         return json_dir
 
-    def __get_secrets_file_name(self):
+    def _get_secrets_file_name(self):
         secrets_file = 'secrets.json'
-        return os.path.join(self.__get_json_dir(), secrets_file)
+        return os.path.join(self._get_json_dir(), secrets_file)
 
-    def __get_schools_file_name(self):
+    def _get_schools_file_name(self):
         schools_file = 'schools.json'
-        return os.path.join(self.__get_json_dir(), schools_file)
+        return os.path.join(self._get_json_dir(), schools_file)
 
-    def __get_tinder_auth_token(self):
+    def _get_facebook_auth_token_url(self):
+        url = 'https://www.facebook.com/v2.6/dialog/oauth'
+        params = {
+            'api_key': '464891386855067',  # Tinder's App ID
+            'redirect_uri': 'fbconnect://success',  # Tinder's whitelisted redirect URI
+            'response_type': 'token',
+            'scope': 'email,public_profile'
+        }
+        response = requests.get(url, params)
+        return response.url
+
+    def _get_tinder_auth_token(self):
         h = self.headers
-        h.update({'content-type': 'application/json'})
+        h['content-type'] = 'application/json'
+        url = 'https://api.gotinder.com/auth'
+        params = {
+            'facebook_id': self.secrets.get('FACEBOOK_ID'),
+            'facebook_token': self.secrets.get('FACEBOOK_AUTH_TOKEN')
+        }
         req = requests.post(
-            'https://api.gotinder.com/auth',
+            url,
             headers=h,
-            data=json.dumps({'facebook_id': self.secrets.get('FACEBOOK_ID'),
-                             'facebook_token': self.secrets.get('FACEBOOK_AUTH_TOKEN')
-                             })
+            data=json.dumps(params)
         )
-        try:
-            token = req.json().get('token')
-        except:
-            token = None
 
-        if token is None:
-            print('ERROR: Could not get token')
+        if req.status_code == 401:
+            print('401 Unauthorized: Could not get token with parameters {}'.format(params))
             sys.exit(0)
 
+        token = req.json()['token']
         return token
 
-    def __update_schools(self, school):
-        schools_file = self.__get_schools_file_name()
+    def _clean_schools_file(self):
+        """Remove duplicate schools from the school list"""
+        schools_file = self._get_schools_file_name()
+        with open(schools_file) as f:
+            schools = json.loads(f.read())
+
+        unique_school_ids = []
+        unique_schools = []
+        for school in schools:
+            school_id = school.get('id')
+            if school_id not in unique_school_ids:
+                unique_school_ids.append(school_id)
+                unique_schools.append(school)
+
+        with open(schools_file, 'w') as outfile:
+            json.dump(unique_schools, outfile, indent=4)
+
+    def _update_schools(self, school):
+        schools_file = self._get_schools_file_name()
         print(' -> Adding school {} to {}'.format(school.get('name'), schools_file))
         with open(schools_file) as f:
             schools = json.loads(f.read())
@@ -193,8 +225,12 @@ class PATinderBot:
         with open(schools_file, 'w') as outfile:
             json.dump(schools, outfile, indent=4)
 
+
 if __name__ == '__main__':
     tinder_bot = PATinderBot()
+    print('Visit {} to retrieve your Facebook auth token'.format(
+        tinder_bot._get_facebook_auth_token_url()))
+    tinder_bot._get_tinder_auth_token()
     for i in range(30):
         print('*** Run {} ***'.format(i + 1))
         tinder_bot.run_tinder_bot()
