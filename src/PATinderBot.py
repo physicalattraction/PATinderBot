@@ -165,7 +165,8 @@ class PATinderBot:
         schools_file = 'schools.json'
         return os.path.join(self._get_json_dir(), schools_file)
 
-    def get_facebook_auth_token_url(self):
+    @staticmethod
+    def get_facebook_auth_token_url():
         url = 'https://www.facebook.com/v2.6/dialog/oauth'
         params = {
             'api_key': '464891386855067',  # Tinder's App ID
