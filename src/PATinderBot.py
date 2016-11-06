@@ -15,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-
+import PACommon
 import json
 from os.path import os
 import requests
@@ -34,6 +34,10 @@ class PATinderBot:
             'app_version': '3',
             'platform': 'ios'
         }
+        self.collageCreator = PACollageCreator()
+
+        self.user, self.tinder_token = self.tinder_login()
+        self.analyze_photo_success_rate(self.user.get('photos', []))
 
     def run_tinder_bot(self):
         print('Tinder bot is running')
@@ -61,7 +65,7 @@ class PATinderBot:
 
     def _recommendations(self):
         h = self.headers
-        h['X-Auth-Token'] = self._get_tinder_auth_token()
+        h['X-Auth-Token'] = self.tinder_token
         r = requests.get('https://api.gotinder.com/user/recs', headers=h)
         if r.status_code == 401:
             raise Exception('HTTP Error 401 Unauthorized')
@@ -124,11 +128,9 @@ class PATinderBot:
             return 'nope'
 
     def _create_photo_cards(self, user, status):
-        collageCreator = PACollageCreator()
         for photo in user.d['photos']:
-            collageCreator.download_img(url=photo['url'])
-
-        collageCreator.create_collage(user, status)
+            self.collageCreator.download_img(url=photo['url'])
+        self.collageCreator.create_collage(user, status)
 
     def _read_secrets_file(self):
         secrets_file = self._get_secrets_file_name()
@@ -152,18 +154,15 @@ class PATinderBot:
                           format(school_id, schools_file))
                 self.schools[school_id] = school.get('status')
 
-    def _get_json_dir(self):
-        current_dir = os.path.dirname(__file__)
-        json_dir = os.path.join(current_dir, '..', 'json')
-        return json_dir
-
-    def _get_secrets_file_name(self):
+    @staticmethod
+    def _get_secrets_file_name():
         secrets_file = 'secrets.json'
-        return os.path.join(self._get_json_dir(), secrets_file)
+        return os.path.join(PACommon.get_dir('json'), secrets_file)
 
-    def _get_schools_file_name(self):
+    @staticmethod
+    def _get_schools_file_name():
         schools_file = 'schools.json'
-        return os.path.join(self._get_json_dir(), schools_file)
+        return os.path.join(PACommon.get_dir('json'), schools_file)
 
     @staticmethod
     def get_facebook_auth_token_url():
@@ -177,7 +176,12 @@ class PATinderBot:
         response = requests.get(url, params)
         return response.url
 
-    def _get_tinder_auth_token(self):
+    def tinder_login(self) -> (dict, str):
+        """
+        Log in to Tinder using the Facebook oAuth token
+
+        :return: (user's info dictionary, user's Tinder oAuth token)
+        """
         h = self.headers
         h['content-type'] = 'application/json'
         url = 'https://api.gotinder.com/auth'
@@ -195,8 +199,21 @@ class PATinderBot:
             print('401 Unauthorized: Could not get token with parameters {}'.format(params))
             sys.exit(0)
 
-        token = req.json()['token']
-        return token
+        result = req.json()
+        user = result.get('user')
+        tinder_token = result.get('token')
+        return user, tinder_token
+
+    @staticmethod
+    def analyze_photo_success_rate(photos):
+        """Analyze the photo success rates of the user"""
+        print('*** Photo analysis ***\n')
+        for photo in photos:
+            url = photo.get('url')
+            select_rate = photo.get('selectRate')
+            success_rate = photo.get('successRate')
+            print('{}: select rate = {}, success rate = {}'.format(url, select_rate, success_rate))
+        print('\n')
 
     def _clean_schools_file(self):
         """Remove duplicate schools from the school list"""
@@ -235,6 +252,6 @@ if __name__ == '__main__':
         PATinderBot.get_facebook_auth_token_url()))
 
     tinder_bot = PATinderBot()
-    for i in range(30):
-        print('*** Run {} ***'.format(i + 1))
+    for i in range(1):
+        print('*** Run {} ***\n'.format(i + 1))
         tinder_bot.run_tinder_bot()
