@@ -27,6 +27,8 @@ from PATinderUser import PATinderUser
 
 
 class PATinderBot:
+    MAX_NUMBER_OF_PHOTOS = 6
+
     def __init__(self):
         self._read_secrets_file()
         self._read_schools_file()
@@ -58,7 +60,7 @@ class PATinderBot:
                 status = 'nope'
                 self._nope(user)
 
-            if action != 'no_action':
+            if action == 'like':
                 self._create_photo_cards(user, status)
 
         print('Tinder bot is finished')
@@ -128,8 +130,9 @@ class PATinderBot:
             return 'nope'
 
     def _create_photo_cards(self, user, status):
-        for photo in user.d['photos']:
-            self.collageCreator.download_img(url=photo['url'])
+        for photo_index, photo in enumerate(user.d['photos']):
+            if photo_index < self.MAX_NUMBER_OF_PHOTOS:
+                self.collageCreator.download_img(url=photo['url'])
         self.collageCreator.create_collage(user, status)
 
     def _read_secrets_file(self):
@@ -252,6 +255,6 @@ if __name__ == '__main__':
         PATinderBot.get_facebook_auth_token_url()))
 
     tinder_bot = PATinderBot()
-    for i in range(1):
+    for i in range(30):
         print('*** Run {} ***\n'.format(i + 1))
         tinder_bot.run_tinder_bot()
