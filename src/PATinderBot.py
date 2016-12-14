@@ -36,7 +36,6 @@ class PATinderBot:
             'app_version': '3',
             'platform': 'ios'
         }
-        self.collageCreator = PACollageCreator()
 
         self.user, self.tinder_token = self.tinder_login()
         self.analyze_photo_success_rate(self.user.get('photos', []))
@@ -130,6 +129,7 @@ class PATinderBot:
             return 'nope'
 
     def _create_photo_cards(self, user, status):
+        self.collageCreator = PACollageCreator()
         for photo_index, photo in enumerate(user.d['photos']):
             if photo_index < self.MAX_NUMBER_OF_PHOTOS:
                 self.collageCreator.download_img(url=photo['url'])
