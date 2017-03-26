@@ -1,4 +1,4 @@
-'''
+"""
 PATinderBot: automatically like and capture Tinder recommendations
 Copyright (C) 2016  physicalattraction
 
@@ -14,14 +14,15 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
+import sys
+from os.path import os
+from shutil import copyfile
+
+import requests
+
 import PACommon
 import json
-from os.path import os
-import requests
-from shutil import copyfile
-import sys
-
 from PACollageCreator import PACollageCreator
 from PATinderUser import PATinderUser
 
@@ -107,12 +108,13 @@ class PATinderBot:
             pass
 
     def _like_or_nope(self, user):
-        '''Determine the 'like action' for the given user: like, nope or no_action
+        """
+        Determine the 'like action' for the given user: like, nope or no_action
 
         If there is at least one good school: like
         If not, if there is at least one unknown school: no_action
         If not: nope
-        '''
+        """
         unknown_school = False
         for school in user.schools:
             school_id = school.get('id')

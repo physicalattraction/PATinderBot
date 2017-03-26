@@ -1,4 +1,4 @@
-'''
+"""
 PATinderBot: automatically like and capture Tinder recommendations
 Copyright (C) 2016  physicalattraction
 
@@ -14,13 +14,12 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
-'''
+"""
 
 from datetime import datetime
 
 
 class PATinderUser(object):
-
     def __init__(self, data_dict):
         self.d = data_dict
 
@@ -45,17 +44,23 @@ class PATinderUser(object):
 
     @property
     def bio(self):
-        '''Return a representation of the user's bio'''
+        """
+        Return a representation of the user's bio
+        """
         return self.d.get('bio')
 
     @property
     def name(self):
-        '''Return the user name'''
+        """
+        Return the user name
+        """
         return self.d.get('name')
 
     @property
     def age(self):
-        '''Return the user age in years'''
+        """
+        Return the user age in years
+        """
 
         raw = self.d.get('birth_date')
         if raw:
@@ -66,7 +71,9 @@ class PATinderUser(object):
 
     @property
     def jobs(self):
-        '''Return a list of jobs. Format per element: "title - company"'''
+        """
+        Return a list of jobs. Format per element: "title - company"
+        """
         jobs = list()
         if 'jobs' in self.d:
             for job in self.d.get('jobs'):
@@ -82,7 +89,9 @@ class PATinderUser(object):
 
     @property
     def schools(self):
-        '''Return a list of schools. Each school is a dictionary with id and name.'''
+        """
+        Return a list of schools. Each school is a dictionary with id and name
+        """
         if 'schools' in self.d:
             return self.d.get('schools')
         else:
@@ -90,12 +99,14 @@ class PATinderUser(object):
 
     @property
     def school_names(self):
-        '''Return a list of school names.'''
+        """Return a list of school names."""
         return [school.get('name') for school in self.schools]
 
     @property
     def common_friends(self):
-        '''Return a list of common friends. Format per element: "name"'''
+        """
+        Return a list of common friends. Format per element: "name"
+        """
         common_friends = list()
         for friend in common_friends:
             print(friend)
@@ -104,9 +115,13 @@ class PATinderUser(object):
 
     @property
     def distance(self):
-        '''Return the distance in km. Format: integer'''
-        distance_in_km = int(round(self.d['distance_mi'] * 1.609))
-        return distance_in_km
+        """
+        Return the distance in km. Format: integer
+        """
+        try:
+            return int(round(self.d['distance_mi'] * 1.609))
+        except KeyError:
+            return 0
 
     def __unicode__(self):
         return u'{name} ({age}), {distance} km, {ago}'.format(

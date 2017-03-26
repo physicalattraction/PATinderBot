@@ -15,12 +15,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
-from PIL import Image, ImageFont, ImageDraw
-from io import BytesIO
-import os
-import requests
 import math
+import os
+from datetime import datetime
+from io import BytesIO
+
+import requests
+from PIL import Image, ImageFont, ImageDraw
 
 import PACommon
 
@@ -32,9 +33,9 @@ class PACollageCreator(object):
 
     def __init__(self):
         self.photos = list()
-        self.__img_size = 400
-        self.__margin = 20
-        self.__first_text = None
+        self._img_size = 400
+        self._margin = 20
+        self._first_text = None
 
     def download_img(self, url):
         """Download an image as a PIL object
@@ -57,7 +58,7 @@ class PACollageCreator(object):
         r = requests.get(url)
         try:
             img = Image.open(BytesIO(r.content))
-            img = img.resize((self.__img_size, self.__img_size), Image.ANTIALIAS)
+            img = img.resize((self._img_size, self._img_size), Image.ANTIALIAS)
             self.photos.append(img)
         except OSError as e:
             # Print the error message, but continue downloading
@@ -70,18 +71,18 @@ class PACollageCreator(object):
 
         nr_photos = len(self.photos)
         if nr_photos == 1:
-            W = self.__img_size
+            W = self._img_size
         else:
-            W = 2 * self.__img_size
-        H = int(math.ceil(nr_photos / 2.0) * self.__img_size)
+            W = 2 * self._img_size
+        H = int(math.ceil(nr_photos / 2.0) * self._img_size)
 
         img = Image.new(mode='RGB', size=(W, H), color='white')
 
         index_x = 0
         index_y = 0
         for photo in self.photos:
-            x = index_x * self.__img_size
-            y = index_y * self.__img_size
+            x = index_x * self._img_size
+            y = index_y * self._img_size
             img.paste(photo, box=(x, y, x + photo.size[0], y + photo.size[1]))
             if index_x == 0:
                 # Move to the right
@@ -98,7 +99,7 @@ class PACollageCreator(object):
         img.save(full_img_name, quality=95, optimize=True)
 
     def _write_user_info(self, img, user):
-        self.__first_text = True
+        self._first_text = True
 
         img = self._put_text_in_img(img, 'Naam: {}'.format(user.name))
         img = self._put_text_in_img(img, 'Leeftijd: {} jaar'.format(user.age))
@@ -122,12 +123,12 @@ class PACollageCreator(object):
         Put the relevant text of a person in the img.
         """
 
-        assert (self.__first_text is not None)
+        assert (self._first_text is not None)
 
         font_size = 24
         line_height = font_size + 2
-        if (self.__first_text):
-            new_height = img.size[1] + line_height + self.__margin
+        if (self._first_text):
+            new_height = img.size[1] + line_height + self._margin
         else:
             new_height = img.size[1] + line_height
 
@@ -142,9 +143,9 @@ class PACollageCreator(object):
         font = ImageFont.truetype("Trebuchet MS Bold.ttf", font_size)
 
         # Define text location
-        x = self.__margin
-        if self.__first_text:
-            y = img.size[1] + self.__margin
+        x = self._margin
+        if self._first_text:
+            y = img.size[1] + self._margin
         else:
             y = img.size[1]
 
@@ -152,20 +153,23 @@ class PACollageCreator(object):
         draw.text((x, y), text, fill='black', font=font)
 
         # Indicate that we have drawn at least one text
-        self.__first_text = False
+        self._first_text = False
 
         return result
 
     def _add_bottom_margin(self, img):
         result = Image.new(mode='RGB',
-                           size=(img.size[0], img.size[1] + self.__margin),
+                           size=(img.size[0], img.size[1] + self._margin),
                            color='white')
         result.paste(img, (0, 0, img.size[0], img.size[1]))
         return result
 
-    def _get_img_dir(self, status):
+    @staticmethod
+    def _get_img_dir(status):
         """Return a string which contains the PATinderBot img directory for the given status."""
-        img_dir = os.path.join(PACommon.get_dir('img'), status)
+        date_format = '%Y%m%d'
+        today_dir = datetime.today().strftime(date_format)
+        img_dir = os.path.join(PACommon.get_dir('img'), status, today_dir)
         PACommon.ensure_dir_exists(img_dir)
         return img_dir
 
