@@ -8,8 +8,9 @@ https://gist.github.com/rtt/5a2e0cfa638c938cca59
 
 ## General use
 
+- Install the requirements by typing from the project dir: `pip install -r requirements/local.txt`
 - Create a secrets file (see below)
-- Run module PATinderBot
+- Run module tinder_bot
 - Adjust schools.json after each run (see below)
 - Enjoy photo collages in folder img 
 
@@ -47,4 +48,5 @@ whether a school shall be assigend a 0 or a 1, but is not used by the program.
 ## Photo collages
 
 PATinderBot will automatically create photo collages with relevant information of the user in 
-the folder img, which is not in the Git repository. It will be created automatically.
+the folder img, which is not in the Git repository. It will be created automatically. It will 
+also append all user information in text format to a file in the image directory.
