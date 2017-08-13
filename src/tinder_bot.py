@@ -15,31 +15,37 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+
+import json
 import sys
 from os.path import os
 from shutil import copyfile
 
 import requests
 
-import PACommon
-import json
-from PACollageCreator import PACollageCreator
-from PATinderUser import PATinderUser
+import common
+from collage_creator import CollageCreator
+from tinder_user import TinderUser
 
 
-class PATinderBot:
+class TinderBot:
     MAX_NUMBER_OF_PHOTOS = 6
 
     def __init__(self):
         self._read_secrets_file()
         self._read_schools_file()
-        self.headers = {
-            'app_version': '3',
-            'platform': 'ios'
-        }
+        self.headers = {'app_version': '3', 'platform': 'ios'}
 
         self.user, self.tinder_token = self.tinder_login()
         self.analyze_photo_success_rate(self.user.get('photos', []))
+
+        self._collage_creator = None
+
+    @property
+    def collage_creator(self) -> CollageCreator:
+        if self._collage_creator is None:
+            self._collage_creator = CollageCreator()
+        return self._collage_creator
 
     def run_tinder_bot(self):
         print('Tinder bot is running')
@@ -56,14 +62,13 @@ class PATinderBot:
                     status = 'match'
                 else:
                     status = 'like'
-            elif action == 'nope':
-                status = 'nope'
-                self._nope(user)
-
-            if action == 'like':
                 self._create_photo_cards(user, status)
+                self._add_user_to_user_list(user, status)
+            elif action == 'nope':
+                self._nope(user)
+                self._add_user_to_user_list(user, status='nope')
 
-        print('Tinder bot is finished')
+        print('Tinder bot is finished\n')
 
     def _recommendations(self):
         h = self.headers
@@ -80,10 +85,11 @@ class PATinderBot:
         results = r.json().get('results')
         if results:
             for result in results:
-                yield PATinderUser(result)
+                yield TinderUser(result)
 
-    def _like(self, user):
+    def _like(self, user: TinderUser):
         print(' -> Like {} ({})'.format(user.name, user.id))
+        # noinspection PyBroadException
         try:
             u = 'https://api.gotinder.com/like/{}'.format(user.id)
             d = requests.get(u, headers=self.headers, timeout=0.7).json()
@@ -95,8 +101,9 @@ class PATinderBot:
             # Ignore all other errors
             pass
 
-    def _nope(self, user):
+    def _nope(self, user: TinderUser):
         print(' -> Nope {} ({})'.format(user.name, user.id))
+        # noinspection PyBroadException
         try:
             u = 'https://api.gotinder.com/pass/{}'.format(user.id)
             requests.get(u, headers=self.headers, timeout=0.7).json()
@@ -107,7 +114,7 @@ class PATinderBot:
             # Ignore all other errors
             pass
 
-    def _like_or_nope(self, user):
+    def _like_or_nope(self, user: TinderUser) -> str:
         """
         Determine the 'like action' for the given user: like, nope or no_action
 
@@ -115,6 +122,7 @@ class PATinderBot:
         If not, if there is at least one unknown school: no_action
         If not: nope
         """
+
         unknown_school = False
         for school in user.schools:
             school_id = school.get('id')
@@ -130,12 +138,14 @@ class PATinderBot:
         else:
             return 'nope'
 
-    def _create_photo_cards(self, user, status):
-        self.collageCreator = PACollageCreator()
+    def _create_photo_cards(self, user: TinderUser, status: str):
         for photo_index, photo in enumerate(user.d['photos']):
             if photo_index < self.MAX_NUMBER_OF_PHOTOS:
-                self.collageCreator.download_img(url=photo['url'])
-        self.collageCreator.create_collage(user, status)
+                self.collage_creator.download_img(url=photo['url'])
+        self.collage_creator.create_collage(user, status)
+
+    def _add_user_to_user_list(self, user: TinderUser, status: str):
+        self.collage_creator.append_to_user_list(user, status)
 
     def _read_secrets_file(self):
         secrets_file = self._get_secrets_file_name()
@@ -162,12 +172,12 @@ class PATinderBot:
     @staticmethod
     def _get_secrets_file_name():
         secrets_file = 'secrets.json'
-        return os.path.join(PACommon.get_dir('json'), secrets_file)
+        return os.path.join(common.get_dir('json'), secrets_file)
 
     @staticmethod
     def _get_schools_file_name():
         schools_file = 'schools.json'
-        return os.path.join(PACommon.get_dir('json'), schools_file)
+        return os.path.join(common.get_dir('json'), schools_file)
 
     @staticmethod
     def get_facebook_auth_token_url():
@@ -210,8 +220,11 @@ class PATinderBot:
         return user, tinder_token
 
     @staticmethod
-    def analyze_photo_success_rate(photos):
-        """Analyze the photo success rates of the user"""
+    def analyze_photo_success_rate(photos: [dict]):
+        """
+        Analyze the photo success rates of the user
+        """
+
         print('*** Photo analysis ***\n')
         for photo in photos:
             url = photo.get('url')
@@ -221,7 +234,10 @@ class PATinderBot:
         print('\n')
 
     def _clean_schools_file(self):
-        """Remove duplicate schools from the school list"""
+        """
+        Remove duplicate schools from the school list
+        """
+
         schools_file = self._get_schools_file_name()
         with open(schools_file) as f:
             schools = json.loads(f.read())
@@ -230,7 +246,7 @@ class PATinderBot:
         unique_schools = []
         for school in schools:
             school_id = school.get('id')
-            if school_id not in unique_school_ids:
+            if school_id and school_id not in unique_school_ids:
                 unique_school_ids.append(school_id)
                 unique_schools.append(school)
 
@@ -254,9 +270,9 @@ class PATinderBot:
 
 if __name__ == '__main__':
     print('Visit this URL to retrieve your Facebook auth token:\n{}\n'.format(
-        PATinderBot.get_facebook_auth_token_url()))
+        TinderBot.get_facebook_auth_token_url()))
 
-    tinder_bot = PATinderBot()
+    tinder_bot = TinderBot()
     for i in range(30):
-        print('*** Run {} ***\n'.format(i + 1))
+        print('*** Run {} ***'.format(i + 1))
         tinder_bot.run_tinder_bot()

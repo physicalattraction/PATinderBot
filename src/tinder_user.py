@@ -15,20 +15,20 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
+from collections import OrderedDict
 from datetime import datetime
 
 
-class PATinderUser(object):
+class TinderUser(object):
     def __init__(self, data_dict):
         self.d = data_dict
 
     @property
-    def id(self):
+    def id(self) -> str:
         return self.d['_id']
 
     @property
-    def ago(self):
+    def ago(self) -> str:
         raw = self.d.get('ping_time')
         if raw:
             d = datetime.strptime(raw, '%Y-%m-%dT%H:%M:%S.%fZ')
@@ -43,21 +43,26 @@ class PATinderUser(object):
         return '[unknown]'
 
     @property
-    def bio(self):
+    def bio(self) -> str:
         """
         Return a representation of the user's bio
         """
-        return self.d.get('bio')
+
+        bio = self.d.get('bio')
+        if bio:
+            bio = bio.replace('\n', '. ')
+        return bio
 
     @property
-    def name(self):
+    def name(self) -> str:
         """
         Return the user name
         """
+
         return self.d.get('name')
 
     @property
-    def age(self):
+    def age(self) -> int:
         """
         Return the user age in years
         """
@@ -70,10 +75,11 @@ class PATinderUser(object):
         return 0
 
     @property
-    def jobs(self):
+    def jobs(self) -> [str]:
         """
         Return a list of jobs. Format per element: "title - company"
         """
+
         jobs = list()
         if 'jobs' in self.d:
             for job in self.d.get('jobs'):
@@ -88,25 +94,30 @@ class PATinderUser(object):
         return jobs
 
     @property
-    def schools(self):
+    def schools(self) -> [dict]:
         """
         Return a list of schools. Each school is a dictionary with id and name
         """
+
         if 'schools' in self.d:
             return self.d.get('schools')
         else:
             return list()
 
     @property
-    def school_names(self):
-        """Return a list of school names."""
-        return [school.get('name') for school in self.schools]
+    def school_names(self) -> [str]:
+        """
+        Return a list of school names
+        """
+
+        return [school.get('name') for school in self.schools if school.get('name')]
 
     @property
-    def common_friends(self):
+    def common_friends(self) -> [str]:
         """
         Return a list of common friends. Format per element: "name"
         """
+
         common_friends = list()
         for friend in common_friends:
             print(friend)
@@ -114,16 +125,38 @@ class PATinderUser(object):
         return common_friends
 
     @property
-    def distance(self):
+    def distance(self) -> int:
         """
         Return the distance in km. Format: integer
         """
+
         try:
             return int(round(self.d['distance_mi'] * 1.609))
-        except KeyError:
+        except (KeyError, TypeError):
             return 0
 
-    def __unicode__(self):
+    @property
+    def info_string(self) -> str:
+        """
+        Return a multiline info string about the user
+        """
+
+        txt_elements = OrderedDict()
+        txt_elements['Naam'] = self.name
+        txt_elements['Leeftijd'] = '{} jaar'.format(self.age)
+        if len(self.jobs) > 0:
+            txt_elements['Werk'] = ', '.join(self.jobs)
+        if len(self.school_names) > 0:
+            txt_elements['School'] = ', '.join(self.school_names)
+        if len(self.common_friends) > 0:
+            txt_elements['Vrienden'] = ', '.join(self.common_friends)
+        txt_elements['Afstand'] = '{} km'.format(self.distance)
+        txt_elements['Bio'] = self.bio
+
+        txt_lines = ['{}: {}'.format(key, value) for key, value in txt_elements.items()]
+        return '\n'.join(txt_lines)
+
+    def __unicode__(self) -> str:
         return u'{name} ({age}), {distance} km, {ago}'.format(
             name=self.d['name'],
             age=self.age,
