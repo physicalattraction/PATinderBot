@@ -6,7 +6,7 @@ def ensure_dir_exists(directory):
         os.mkdir(directory)
 
 
-def get_dir(directory):
+def get_dir(directory: str) -> str:
     """
     Return a string which contains the complete path to the input directory
 
@@ -23,6 +23,7 @@ def get_dir(directory):
     :param directory: string of the directory to search for
     :return: string with the complete path to the searched for directory
     """
+
     current_dir = os.path.dirname(__file__)
     project_dir = os.path.join(current_dir, '..')
     result = os.path.join(project_dir, directory)

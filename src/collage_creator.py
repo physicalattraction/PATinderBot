@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+# TODO: Check if this collage creator is still working
+
 import math
 import os
 from datetime import datetime
@@ -73,7 +75,7 @@ class CollageCreator(object):
             print(e)
         img = self._add_bottom_margin(img)
 
-        filename = '{}_{}.jpg'.format(user.name, user.id)
+        filename = f'{user.name}_{user.id}.jpg'
         full_img_name = os.path.join(self._get_img_dir(status), filename)
         img.save(full_img_name, quality=95, optimize=True)
 
@@ -182,6 +184,7 @@ class CollageCreator(object):
         date_format = '%Y%m%d'
         today_dir = datetime.today().strftime(date_format)
         img_dir = os.path.join(common.get_dir('img'), status, today_dir)
+        common.ensure_dir_exists(os.path.dirname(img_dir))  # TODO: Think of something better for this hack
         common.ensure_dir_exists(img_dir)
         return img_dir
 

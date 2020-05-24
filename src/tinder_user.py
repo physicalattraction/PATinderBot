@@ -15,32 +15,25 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
+import json
 from collections import OrderedDict
 from datetime import datetime
+from typing import Any, Dict
+
+TinderUserDict = Dict[str, Any]  # Dictionary representation of a Tinder User
 
 
-class TinderUser(object):
-    def __init__(self, data_dict):
+class TinderUser:
+    """
+    Representation of a Tinder User
+    """
+
+    def __init__(self, data_dict: TinderUserDict):
         self.d = data_dict
 
     @property
     def id(self) -> str:
         return self.d['_id']
-
-    @property
-    def ago(self) -> str:
-        raw = self.d.get('ping_time')
-        if raw:
-            d = datetime.strptime(raw, '%Y-%m-%dT%H:%M:%S.%fZ')
-            secs_ago = int(datetime.now().strftime("%s")) - int(d.strftime("%s"))
-            if secs_ago > 86400:
-                return u'{days} days ago'.format(days=secs_ago / 86400)
-            elif secs_ago < 3600:
-                return u'{mins} mins ago'.format(mins=secs_ago / 60)
-            else:
-                return u'{hours} hours ago'.format(hours=secs_ago / 3600)
-
-        return '[unknown]'
 
     @property
     def bio(self) -> str:
@@ -65,12 +58,18 @@ class TinderUser(object):
     def age(self) -> int:
         """
         Return the user age in years
+
+        Note: many users have the following setting:
+            "birth_date_info": "fuzzy birthdate active, not displaying real birth_date"
+        In practice, this means that the birthday is not precise, they are all on the same day.
         """
 
         raw = self.d.get('birth_date')
         if raw:
-            d = datetime.strptime(raw, '%Y-%m-%dT%H:%M:%S.%fZ')
-            return datetime.now().year - int(d.strftime('%Y'))
+            birth_date = datetime.strptime(raw, '%Y-%m-%dT%H:%M:%S.%fZ')
+            now = datetime.now()
+            age = now - birth_date
+            return age.days // 365
 
         return 0
 
@@ -142,6 +141,7 @@ class TinderUser(object):
         """
 
         txt_elements = OrderedDict()
+        txt_elements['Id'] = self.id
         txt_elements['Naam'] = self.name
         txt_elements['Leeftijd'] = '{} jaar'.format(self.age)
         if len(self.jobs) > 0:
@@ -156,10 +156,15 @@ class TinderUser(object):
         txt_lines = ['{}: {}'.format(key, value) for key, value in txt_elements.items()]
         return '\n'.join(txt_lines)
 
+    @property
+    def photos(self):
+        return self.d['photos']
+
     def __unicode__(self) -> str:
-        return u'{name} ({age}), {distance} km, {ago}'.format(
-            name=self.d['name'],
-            age=self.age,
-            distance=self.distance,
-            ago=self.ago
-        )
+        return f'{self.name} ({self.age}), {self.distance} km'
+
+    def __str__(self) -> str:
+        return f'{self.name} ({self.age}), {self.distance} km'
+
+    def __repr__(self) -> str:
+        return f'{self.name} ({self.age}), {self.distance} km'
