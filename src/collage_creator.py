@@ -28,6 +28,7 @@ from PIL import Image, ImageFont, ImageDraw
 
 import common
 from tinder_user import TinderUser
+from types import Status
 
 
 class CollageCreator(object):
@@ -62,7 +63,7 @@ class CollageCreator(object):
             # Print the error message, but continue downloading
             print(e)
 
-    def create_collage(self, user: TinderUser, status: str):
+    def create_collage(self, user: TinderUser, status: Status):
         """
         Collect all photos and place user info under the photos
         """
@@ -76,19 +77,8 @@ class CollageCreator(object):
         img = self._add_bottom_margin(img)
 
         filename = f'{user.name}_{user.id}.jpg'
-        full_img_name = os.path.join(self._get_img_dir(status), filename)
+        full_img_name = os.path.join(self._get_img_dir(status.value), filename)
         img.save(full_img_name, quality=95, optimize=True)
-
-    def append_to_user_list(self, user: TinderUser, status: str):
-        """
-        Append the user info to the correct user list
-        """
-
-        user_list_file = self._get_liked_user_list_file_name(status)
-        with open(user_list_file, 'a+') as f:
-            print('Append to file {}'.format(user_list_file))
-            f.write(user.info_string)
-            f.write('\n\n')
 
     def _write_user_photos(self):
         nr_photos = len(self.photos)
@@ -116,17 +106,17 @@ class CollageCreator(object):
     def _write_user_info(self, img, user):
         self._first_text = True
 
-        img = self._put_text_in_img(img, 'Naam: {}'.format(user.name))
-        img = self._put_text_in_img(img, 'Leeftijd: {} jaar'.format(user.age))
+        img = self._put_text_in_img(img, f'Naam: {user.name}')
+        img = self._put_text_in_img(img, f'Leeftijd: {user.age} jaar')
         if len(user.jobs) > 0:
-            img = self._put_text_in_img(img, 'Werk: {}'.format(', '.join(user.jobs)))
+            img = self._put_text_in_img(img, f'Werk: {", ".join(user.jobs)}')
         if len(user.school_names) > 0:
-            img = self._put_text_in_img(img, 'School: {}'.format(', '.join(user.school_names)))
+            img = self._put_text_in_img(img, f'School: {", ".join(user.school_names)}')
         if len(user.common_friends) > 0:
-            img = self._put_text_in_img(img, 'Vrienden: {}'.format(', '.join(user.common_friends)))
+            img = self._put_text_in_img(img, f'Vrienden: {", ".join(user.common_friends)}')
 
-        img = self._put_text_in_img(img, 'Afstand: {} km'.format(user.distance))
-        img = self._put_text_in_img(img, 'Bio: {}'.format(user.bio))
+        img = self._put_text_in_img(img, f'Afstand: {user.distance} km')
+        img = self._put_text_in_img(img, f'Bio: {user.bio}')
 
         return img
 
@@ -176,27 +166,15 @@ class CollageCreator(object):
         return result
 
     @staticmethod
-    def _get_img_dir(status):
+    def _get_img_dir(status: Status):
         """
-        Return a string which contains the PATinderBot img directory for the given status
+        Return a string which contains the PATinderBot img directory for the given status for today
         """
 
         date_format = '%Y%m%d'
         today_dir = datetime.today().strftime(date_format)
-        img_dir = os.path.join(common.get_dir('img'), status, today_dir)
-        common.ensure_dir_exists(os.path.dirname(img_dir))  # TODO: Think of something better for this hack
+        status_dir = os.path.join(common.get_dir('img'), status.value)
+        img_dir = os.path.join(status_dir, today_dir)
+        common.ensure_dir_exists(status_dir)
         common.ensure_dir_exists(img_dir)
         return img_dir
-
-    @staticmethod
-    def _get_liked_user_list_file_name(status):
-        """
-        Return a string which contains the user list text file for the given status
-        """
-
-        liked_user_list_file = '{}d_users.txt'.format(status)
-        return os.path.join(CollageCreator._get_img_dir(status), liked_user_list_file)
-
-
-if __name__ == '__main__':
-    pass

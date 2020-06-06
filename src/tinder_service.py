@@ -31,10 +31,16 @@ class TinderService:
 
     def get_user(self, user_id: str) -> TinderUser:
         user_dict: TinderUserDict = self._make_get_call(url=f'/user/{user_id}/')['results']
+        print(user_dict)
         return TinderUser(user_dict)
 
     def get_recommendations(self) -> Iterator[TinderUser]:
-        recommendations: List[TinderUserDict] = self._make_get_call(url='/user/recs', params={'count': 1})['results']
+        response = self._make_get_call(url='/user/recs', params={'count': 1})
+        if 'results' not in response:
+            msg = 'There are no more recommendations for you'
+            print(msg)
+            return
+        recommendations: List[TinderUserDict] = response['results']
         for user_dict in recommendations:
             yield TinderUser(user_dict)
 

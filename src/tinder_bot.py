@@ -16,7 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+import random
+import time
+
 from collage_creator import CollageCreator
+from enums import Status, SwipeAction
 from school_manager import ACTION_REQUIRED, APPROVED, SchoolManager
 from secrets import TINDER_USER_ID, get_from_secrets
 from tinder_service import TinderService
@@ -33,7 +37,7 @@ class TinderBot:
 
         self.service = TinderService()
         self.user = self.service.get_user(get_from_secrets(TINDER_USER_ID))
-        analyze_photo_success_rate(self.user.photos)
+        # analyze_photo_success_rate(self.user.photos)
 
     def run(self):
         print('Tinder bot is running')
@@ -42,27 +46,36 @@ class TinderBot:
             if user is None:
                 break
 
+            user = TinderService().get_user('5a68e60dbd42cd31665d85c0')
             action = self._like_or_nope(user)
-            if action == 'like':
+            if action == SwipeAction.like:
                 match = self.service.like(user)
                 if match:
-                    status = 'match'
+                    status = Status.matched
                 else:
-                    status = 'like'
+                    status = Status.liked
                 self._create_photo_cards(user, status)
                 self._add_user_to_user_list(user, status)
-            elif action == 'nope':
+            elif action == SwipeAction.nope:
                 self.service.nope(user)
-                self._create_photo_cards(user, status='nope')
-                self._add_user_to_user_list(user, status='nope')
+                # In order to not look like a bot, we wait a random time around 1 second
+                # For like this is not necessary, since we create photo collage for them,
+                # which takes a similar amount of time
+                time.sleep(random.uniform(0.7, 1.2))
+                # TODO: Refactor to have three user list objects, and append it to the correct one
+                self._add_user_to_user_list(user, status=Status.noped)
+            elif action == SwipeAction.no_action:
+                # Explicitly do nothing
+                pass
+
+            break
 
         print('Tinder bot is finished\n')
 
-    def _like_or_nope(self, user: TinderUser) -> str:
+    def _like_or_nope(self, user: TinderUser) -> SwipeAction:
         """
-        Determine the 'like action' for the given user: like, nope or no_action
+        Determine the SwipeAction for the given user
 
-        # TODO: Use an Enum for this
         If there is at least one good school: like
         If not, if there is at least one unknown school: no_action
         If not: nope
@@ -70,10 +83,15 @@ class TinderBot:
         # TODO: Check for bio
         """
 
-        # Check for distance in km. If more than 100, it's an automatic reject
-        if user.distance > 100:
-            print(f'Distance is too large for {user}')
-            return 'nope'
+        # Check for distance in km
+        if user.distance < 20:
+            # If less than 20 km, I want to check them out manually
+            print(f'To check out manually: {user}')
+            return SwipeAction.no_action
+        elif user.distance > 200:
+            # If outside The Netherlands, automatic reject
+            print(f'Distance too large for: {user}')
+            return SwipeAction.nope
 
         # Check for schools the user went to. If she went to one of the approved schools,
         # it's an automatic like. If there is at least unknown school, no action is taken,
@@ -82,23 +100,23 @@ class TinderBot:
         statuses = [self.school_manager.get_status(school) for school in user.schools]
         if APPROVED in statuses:
             print(f'Good school for {user}: {user.schools}')
-            return 'like'
+            return SwipeAction.like
         elif ACTION_REQUIRED in statuses:
             print(f'Unknown school for {user}: {user.schools}')
-            return 'no_action'
+            return SwipeAction.no_action
         else:
             # TODO: Fallthorugh for when there is no school
             print(f'No good school for {user}: {user.schools}')
-            return 'nope'
+            return SwipeAction.nope
 
-    def _create_photo_cards(self, user: TinderUser, status: str):
+    def _create_photo_cards(self, user: TinderUser, status: Status):
         collage_creator = CollageCreator()
         for photo_index, photo in enumerate(user.d['photos']):
             if photo_index < self.MAX_NUMBER_OF_PHOTOS:
                 collage_creator.download_img(url=photo['url'])
         collage_creator.create_collage(user, status)
 
-    def _add_user_to_user_list(self, user: TinderUser, status: str):
+    def _add_user_to_user_list(self, user: TinderUser, status: Status):
         collage_creator = CollageCreator()
         collage_creator.append_to_user_list(user, status)
 
@@ -119,4 +137,5 @@ def analyze_photo_success_rate(photos: [dict]):
 
 if __name__ == '__main__':
     tinder_bot = TinderBot()
-    tinder_bot.run()
+    print(f'{SwipeAction.like.value}d')
+    # tinder_bot.run()

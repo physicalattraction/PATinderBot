@@ -15,7 +15,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-import json
 from collections import OrderedDict
 from datetime import datetime
 from typing import Any, Dict
@@ -143,22 +142,40 @@ class TinderUser:
         txt_elements = OrderedDict()
         txt_elements['Id'] = self.id
         txt_elements['Naam'] = self.name
-        txt_elements['Leeftijd'] = '{} jaar'.format(self.age)
+        txt_elements['Leeftijd'] = f'{self.age} jaar'
         if len(self.jobs) > 0:
             txt_elements['Werk'] = ', '.join(self.jobs)
         if len(self.school_names) > 0:
             txt_elements['School'] = ', '.join(self.school_names)
         if len(self.common_friends) > 0:
             txt_elements['Vrienden'] = ', '.join(self.common_friends)
-        txt_elements['Afstand'] = '{} km'.format(self.distance)
+        txt_elements['Afstand'] = f'{self.distance} km'
         txt_elements['Bio'] = self.bio
 
-        txt_lines = ['{}: {}'.format(key, value) for key, value in txt_elements.items()]
+        txt_lines = [f'{key}: {value}' for key, value in txt_elements.items()]
         return '\n'.join(txt_lines)
 
     @property
     def photos(self):
         return self.d['photos']
+
+    def as_dict(self):
+        """
+        Return a dictionary representation of the current object, removing keys with empty values
+        """
+
+        result = {
+            'id': self.id,
+            'name': self.name,
+            'age': self.age,
+            'distance': self.distance,
+            'bio': self.bio,
+            'jobs': ', '.join(self.jobs),
+            'school_names': ', '.join(self.school_names),
+            'common_friends': ', '.join(self.common_friends),
+            'photos': [photo['url'] for photo in self.photos],
+        }
+        return {k: v for k, v in result.items() if v}
 
     def __unicode__(self) -> str:
         return f'{self.name} ({self.age}), {self.distance} km'
