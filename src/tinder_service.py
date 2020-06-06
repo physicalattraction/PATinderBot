@@ -1,13 +1,11 @@
-import json
-from typing import Any, Dict, Iterator, List, Union
+from typing import Any, Dict, Iterator, List
 
 import requests
 
+from common import OptionalJSON
 from secrets import TINDER_ACCESS_TOKEN, TINDER_USER_ID, get_from_secrets
 from tinder_authenticator import TinderAuthenticator
 from tinder_user import TinderUser, TinderUserDict
-
-OptionalJSON = Union[List, Dict, float, int, str, bool, None]
 
 
 class TinderService:
@@ -72,8 +70,7 @@ class TinderService:
         return self._make_post_call(url=f'/user/matches/{user_id}', body={'message': message})
 
     def _update_tinder_tokens(self):
-        authenticator = TinderAuthenticator()
-        authenticator.set_new_tokens()
+        TinderAuthenticator().ensure_authentication()
 
     def _make_get_call(self, url: str, params: Dict[str, Any] = None) -> OptionalJSON:
         response = requests.get(self.base_url + url, headers=self.headers, params=params)
@@ -104,6 +101,6 @@ class TinderService:
 
 if __name__ == '__main__':
     service = TinderService()
-    user_id = get_from_secrets(TINDER_USER_ID)
-    result = service.get_user(user_id)
+    specific_user_id = get_from_secrets(TINDER_USER_ID)
+    result = service.get_user(specific_user_id)
     print(result)

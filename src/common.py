@@ -1,4 +1,7 @@
 import os
+from typing import Dict, List, Union
+
+OptionalJSON = Union[List, Dict, float, int, str, bool, None]
 
 
 def ensure_dir_exists(directory):

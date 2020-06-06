@@ -29,7 +29,7 @@ def _write_secrets_file(secrets: Dict[str, Any]):
 
 def get_from_secrets(key: str) -> Any:
     secrets = _read_secrets_file()
-    return secrets[key]
+    return secrets.get(key)
 
 
 def set_in_secrets(key: str, value: Any):
