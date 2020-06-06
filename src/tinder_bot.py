@@ -33,7 +33,7 @@ class TinderBot:
 
         self.service = TinderService()
         self.user = self.service.get_user(get_from_secrets(TINDER_USER_ID))
-        self.analyze_photo_success_rate(self.user.photos)
+        analyze_photo_success_rate(self.user.photos)
 
     def run(self):
         print('Tinder bot is running')
@@ -102,19 +102,19 @@ class TinderBot:
         collage_creator = CollageCreator()
         collage_creator.append_to_user_list(user, status)
 
-    @staticmethod
-    def analyze_photo_success_rate(photos: [dict]):
-        """
-        Analyze the photo success rates of the user
-        """
 
-        print('*** Photo analysis ***\n')
-        for photo in photos:
-            url = photo.get('url')
-            select_rate = photo.get('selectRate')
-            success_rate = photo.get('successRate')
-            print('{}: select rate = {}, success rate = {}'.format(url, select_rate, success_rate))
-        print('\n')
+def analyze_photo_success_rate(photos: [dict]):
+    """
+    Analyze the photo success rates of the user
+    """
+
+    print('*** Photo analysis ***\n')
+    for photo in photos:
+        url = photo.get('url')
+        select_rate = photo.get('selectRate')
+        success_rate = photo.get('successRate')
+        print(f'{url}: select rate = {select_rate}, success rate = {success_rate}')
+    print('\n')
 
 
 if __name__ == '__main__':
