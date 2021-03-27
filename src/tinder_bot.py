@@ -102,4 +102,4 @@ if __name__ == '__main__':
     Logger.max_level = 1
     tinder_bot = TinderBot()
     # tinder_bot.analyze_photo_success_rate()
-    tinder_bot.run(nr_profiles=100)
+    tinder_bot.run(nr_profiles=10)

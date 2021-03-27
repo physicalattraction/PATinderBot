@@ -1,12 +1,18 @@
+from datetime import datetime
 from typing import Any, Dict, Iterator, List
 
 import requests
 
 from common import OptionalJSON
+from logger import Logger
 from secrets import TINDER_ACCESS_TOKEN, TINDER_USER_ID, get_from_secrets
 from tinder_authenticator import TinderAuthenticator
 from tinder_user import TinderUser
 from type_hinting import TinderUserDict
+
+
+class OutOfLikes(Exception):
+    pass
 
 
 class TinderService:
@@ -52,7 +58,14 @@ class TinderService:
         :return: Flag indicating whether you have match
         """
 
-        return self._make_get_call(url=f'/like/{user.id}')['match']
+        response = self._make_get_call(url=f'/like/{user.id}')
+        likes_remaining = response['likes_remaining']
+        if likes_remaining == 0:
+            rate_limited_until = datetime.fromtimestamp(response['rate_limited_until'] / 1000)
+            raise OutOfLikes(f'Out of likes until {rate_limited_until:"%Y-%m-%d %H:%M:%S"}')
+        elif likes_remaining % 10 == 0:
+            Logger.log(f'Likes remaining: {likes_remaining}')
+        return response['match']
 
     def nope(self, user: TinderUser):
         """
