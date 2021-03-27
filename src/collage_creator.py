@@ -27,8 +27,8 @@ import requests
 from PIL import Image, ImageFont, ImageDraw
 
 import common
+from enums import Status
 from tinder_user import TinderUser
-from types import Status
 
 
 class CollageCreator(object):
@@ -77,7 +77,7 @@ class CollageCreator(object):
         img = self._add_bottom_margin(img)
 
         filename = f'{user.name}_{user.id}.jpg'
-        full_img_name = os.path.join(self._get_img_dir(status.value), filename)
+        full_img_name = os.path.join(self._get_img_dir(status), filename)
         img.save(full_img_name, quality=95, optimize=True)
 
     def _write_user_photos(self):

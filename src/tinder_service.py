@@ -30,7 +30,7 @@ class TinderService:
         }
 
     def get_user(self, user_id: str) -> TinderUser:
-        user_dict: TinderUserDict = self._make_get_call(url=f'/user/{user_id}/')['results']
+        user_dict: TinderUserDict = self._make_get_call(url=f'/user/{user_id}')['results']
         print(user_dict)
         return TinderUser(user_dict)
 

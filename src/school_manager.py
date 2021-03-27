@@ -1,104 +1,113 @@
 import json
 import os.path
-from operator import itemgetter
-from shutil import copyfile
-from typing import Dict, List, Union
+import string
+from typing import Dict, Set, Union
 
 import common
 
-SCHOOLS_FILE = os.path.join(common.get_dir('json'), 'schools.json')
-SCHOOLS_TEMPLATE_FILE = os.path.join(common.get_dir('json'), 'schools_template.json')
-
-APPROVE_WORDS = ['universiteit', 'hogeschool', 'university']
+SCHOOLS_APPROVE_WORDS_FILE = os.path.join(common.get_dir('json'), 'school_approve_words.json')
+SCHOOLS_REJECT_WORDS_FILE = os.path.join(common.get_dir('json'), 'school_reject_words.json')
+SCHOOLS_REVIEW_WORDS_FILE = os.path.join(common.get_dir('json'), 'school_review_words.json')
 
 # TODO: Turn into an Enum
 REJECTED = 0
 APPROVED = 1
 ACTION_REQUIRED = 2
 
+# {
+#     'id': 131231,  # Ignored in this code
+#     'name': 'Amsterdam University'
+# }
 SchoolDict = Dict[str, Union[str, int]]
 
 
-class SchoolManager:
-    _school_statuses: Dict[str, int] = {}  # Look up from school id to status
+class WordListMixin:
+    _approve_words: Set[str] = None
+    _reject_words: Set[str] = None
+    _review_words: Set[str] = None
 
     @property
-    def school_statuses(self):
-        if not self._school_statuses:
-            self._clean_schools_file()
-            self._school_statuses = {school['id']: school['status'] for school in self._read_schools_file()}
-        return self._school_statuses
+    def approve_words(self):
+        if not self._approve_words:
+            self._approve_words = self._read_file(SCHOOLS_APPROVE_WORDS_FILE)
+        return self._approve_words
+
+    @property
+    def reject_words(self):
+        if not self._reject_words:
+            self._reject_words = self._read_file(SCHOOLS_REJECT_WORDS_FILE)
+        return self._reject_words
+
+    @property
+    def review_words(self):
+        if not self._review_words:
+            self._review_words = self._read_file(SCHOOLS_REVIEW_WORDS_FILE)
+        return self._review_words
+
+    def add_word_for_review(self, value: str):
+        if value not in self.review_words:
+            self._review_words.add(value)
+            with open(SCHOOLS_REVIEW_WORDS_FILE, 'w') as f:
+                json.dump(sorted(self._review_words), f, indent=2)
+
+    def _read_file(self, filepath: str) -> Set[str]:
+        self._ensure_exists(filepath)
+        with open(filepath, 'r') as f:
+            result = set(json.load(f))
+        with open(filepath, 'w') as f:
+            # Perform maintenance on the file by sorting the contents alphabetically
+            json.dump(sorted(result), f, indent=2)
+        return result
+
+    def _ensure_exists(self, filepath: str) -> None:
+        if not os.path.exists(filepath):
+            # If there is a school file missing, generate it empty
+            with open(filepath, 'w') as f:
+                json.dump([], f)
+
+
+class SchoolManager(WordListMixin):
+    def __init__(self, verbosity: int = 0):
+        self.verbosity = verbosity
 
     def get_status(self, school: SchoolDict) -> int:
         """
         Return the status for the given school
         """
 
-        if not school.get('name'):
+        try:
+            # Clean up the name: make all letters lower case and remove all non alphanumerical characters
+            name = school['name']
+            clean_name = name.lower()
+            clean_name = ''.join(letter for letter in clean_name
+                                 if letter in string.ascii_lowercase + string.digits + ' ')
+        except KeyError:
             # Somehow, some schools don't have a name. Since we qualify all schools based on
             # their name, these schools are useless, and hence we automatically reject them.
+            if self.verbosity >= 1:
+                print(f'School has no name: {school}')
             return REJECTED
-        name = school['name']
 
-        if not school.get('id'):
-            # Somehow, some schools don't have an ID. If they don't have an ID, we don't store
-            # them in the file. We do judge them on the spot, based on the name.
-            if any(word in name.lower() for word in APPROVE_WORDS):
-                return APPROVED
-            else:
-                return REJECTED
-        school_id = school['id']
-
-        if school_id in self.school_statuses:
-            return self.school_statuses[school_id]
+        words = clean_name.split(' ')
+        if any(word in self.approve_words for word in words):
+            # When any word is approved, we know it's a good school
+            if self.verbosity >= 1:
+                print(f'At least one words in school name is approved: {name}')
+            return APPROVED
+        elif all(word in self.reject_words for word in words):
+            # When all words are rejected, we know it's a bad school
+            if self.verbosity >= 1:
+                print(f'All words in school name are rejected: {name}')
+            return REJECTED
         else:
-            return self._add_school(school)
+            # In all other cases, we need to review the words and take no action
+            if self.verbosity >= 1:
+                print(f'All words in school name are for review: {clean_name}')
+            for word in words:
+                if word not in self.reject_words:
+                    self.add_word_for_review(word)
+            return ACTION_REQUIRED
 
-    def _add_school(self, school: SchoolDict) -> int:
-        """
-        Add the given school to the school file
-        """
 
-        assert school.get('id'), f'School must have an id: {school}'
-        assert school.get('name'), f'School must have a name: {school}'
-
-        school_id, name = school['id'], school['name']
-        print(f' -> Adding school {name} to {SCHOOLS_FILE}')
-        schools = self._read_schools_file()
-
-        if any(word in name.lower() for word in APPROVE_WORDS):
-            status = APPROVED
-        else:
-            status = ACTION_REQUIRED
-        schools.append({'id': school_id, 'name': name, 'status': status})
-        self._write_schools_file(schools)
-        return status
-
-    def _read_schools_file(self) -> List[SchoolDict]:
-        """
-        Read the list of schools from the schools file
-        """
-
-        if not os.path.isfile(SCHOOLS_FILE):
-            copyfile(SCHOOLS_TEMPLATE_FILE, SCHOOLS_FILE)
-
-        with open(SCHOOLS_FILE) as fp:
-            return json.load(fp)
-
-    def _write_schools_file(self, schools: List[SchoolDict]):
-        """
-        Write the input list of schools to the schools file
-        """
-
-        with open(SCHOOLS_FILE, 'w') as fp:
-            json.dump(schools, fp, indent=4)
-
-    def _clean_schools_file(self):
-        """
-        Remove duplicate schools from the school list
-        """
-
-        schools = self._read_schools_file()
-        id_to_school = {school['id']: school for school in schools}
-        unique_schools = sorted(id_to_school.values(), key=itemgetter('status', 'id'))
-        self._write_schools_file(unique_schools)
+if __name__ == '__main__':
+    print(SchoolManager(verbosity=1).get_status({'name': 'PABO Amsterdam'}))

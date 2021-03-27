@@ -46,7 +46,6 @@ class TinderBot:
             if user is None:
                 break
 
-            user = TinderService().get_user('5a68e60dbd42cd31665d85c0')
             action = self._like_or_nope(user)
             if action == SwipeAction.like:
                 match = self.service.like(user)
@@ -55,7 +54,7 @@ class TinderBot:
                 else:
                     status = Status.liked
                 self._create_photo_cards(user, status)
-                self._add_user_to_user_list(user, status)
+                # self._add_user_to_user_list(user, status)
             elif action == SwipeAction.nope:
                 self.service.nope(user)
                 # In order to not look like a bot, we wait a random time around 1 second
@@ -63,12 +62,12 @@ class TinderBot:
                 # which takes a similar amount of time
                 time.sleep(random.uniform(0.7, 1.2))
                 # TODO: Refactor to have three user list objects, and append it to the correct one
-                self._add_user_to_user_list(user, status=Status.noped)
+                # self._add_user_to_user_list(user, status=Status.noped)
             elif action == SwipeAction.no_action:
                 # Explicitly do nothing
                 pass
 
-            break
+            # break
 
         print('Tinder bot is finished\n')
 
@@ -99,14 +98,14 @@ class TinderBot:
         # rejected, the user is rejected.
         statuses = [self.school_manager.get_status(school) for school in user.schools]
         if APPROVED in statuses:
-            print(f'Good school for {user}: {user.schools}')
+            print(f'Good school for {user}: {user.schools}. Action: {SwipeAction.like.value}')
             return SwipeAction.like
         elif ACTION_REQUIRED in statuses:
-            print(f'Unknown school for {user}: {user.schools}')
+            print(f'Unknown school for {user}: {user.schools}. Action: {SwipeAction.no_action.value}')
             return SwipeAction.no_action
         else:
             # TODO: Fallthorugh for when there is no school
-            print(f'No good school for {user}: {user.schools}')
+            print(f'No good school for {user}: {user.schools}. Action: {SwipeAction.nope.value}')
             return SwipeAction.nope
 
     def _create_photo_cards(self, user: TinderUser, status: Status):
@@ -118,7 +117,7 @@ class TinderBot:
 
     def _add_user_to_user_list(self, user: TinderUser, status: Status):
         collage_creator = CollageCreator()
-        collage_creator.append_to_user_list(user, status)
+        collage_creator.create_collage(user, status)
 
 
 def analyze_photo_success_rate(photos: [dict]):
@@ -137,5 +136,4 @@ def analyze_photo_success_rate(photos: [dict]):
 
 if __name__ == '__main__':
     tinder_bot = TinderBot()
-    print(f'{SwipeAction.like.value}d')
-    # tinder_bot.run()
+    tinder_bot.run()

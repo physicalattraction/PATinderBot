@@ -14,7 +14,8 @@ class TinderAuthenticator:
     """
 
     base_url = 'https://api.gotinder.com'
-    headers = {'user-agent': 'Tinder/11.4.0 (iPhone; iOS 12.4.1; Scale/2.00)'}
+    headers = {'User-Agent': 'Tinder/11.4.0 (iPhone; iOS 12.4.1; Scale/2.00)',
+               'content-type': 'application/json'}
 
     def ensure_authentication(self):
         """
