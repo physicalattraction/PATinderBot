@@ -24,7 +24,7 @@ from datetime import datetime
 from io import BytesIO
 
 import requests
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 import common
 from enums import Status
@@ -79,6 +79,13 @@ class CollageCreator(object):
         filename = f'{user.name}_{user.id}.jpg'
         full_img_name = os.path.join(self._get_img_dir(status), filename)
         img.save(full_img_name, quality=95, optimize=True)
+
+    @property
+    def nr_liked_today(self):
+        liked_dir = self._get_img_dir(Status.liked)
+        return len([name for name in os.listdir(liked_dir)
+                    if os.path.isfile(os.path.join(liked_dir, name))
+                    and name.endswith('.jpg')])
 
     def _write_user_photos(self):
         nr_photos = len(self.photos)

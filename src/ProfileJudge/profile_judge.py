@@ -35,8 +35,10 @@ class ProfileJudge:
         school_vote = self.school_judge.vote(user)
         if school_vote == Vote.approve:
             return self._action(SwipeAction.like, 'Good school found.')
-        elif school_vote == Vote.reject or school_vote == Vote.no_info:
+        elif school_vote == Vote.reject:
             return self._action(SwipeAction.nope, 'No good school found.')
+        elif school_vote == Vote.no_info:
+            return self._action(SwipeAction.nope, 'No school found.')
         elif school_vote == Vote.review:
             return self._action(SwipeAction.no_action, 'Unknown school found.')
 

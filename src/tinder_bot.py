@@ -35,7 +35,7 @@ class TinderBot:
         self.profile_judge = ProfileJudge()
         self.service = TinderService()
         self.user = self.service.get_user(get_from_secrets(TINDER_USER_ID))
-        Logger.log(f'TinderBot initialized for {self.user.name}')
+        Logger.log(f'TinderBot initialized for {self.user.name}. Liked today: {CollageCreator().nr_liked_today}.')
 
     def run(self, nr_profiles: int = 10):
         Logger.log('TinderBot is running')
@@ -55,7 +55,7 @@ class TinderBot:
                 self._like_or_nope(user)
 
                 if nr_profiles_checked >= nr_profiles:
-                    Logger.log('TinderBot is finished')
+                    Logger.log(f'TinderBot is finished. Liked today: {CollageCreator().nr_liked_today}.')
                     return
 
     def analyze_photo_success_rate(self):
