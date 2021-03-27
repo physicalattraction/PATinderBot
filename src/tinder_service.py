@@ -5,7 +5,8 @@ import requests
 from common import OptionalJSON
 from secrets import TINDER_ACCESS_TOKEN, TINDER_USER_ID, get_from_secrets
 from tinder_authenticator import TinderAuthenticator
-from tinder_user import TinderUser, TinderUserDict
+from tinder_user import TinderUser
+from type_hinting import TinderUserDict
 
 
 class TinderService:

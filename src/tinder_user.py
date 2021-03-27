@@ -19,7 +19,7 @@ from collections import OrderedDict
 from datetime import datetime
 from typing import Any, Dict
 
-TinderUserDict = Dict[str, Any]  # Dictionary representation of a Tinder User
+from type_hinting import TinderUserDict
 
 
 class TinderUser:

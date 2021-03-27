@@ -31,42 +31,32 @@ from tinder_user import TinderUser
 class TinderBot:
     MAX_NUMBER_OF_PHOTOS = 6
 
-    _collage_creator: CollageCreator = None
-
     def __init__(self):
         self.profile_judge = ProfileJudge()
         self.service = TinderService()
         self.user = self.service.get_user(get_from_secrets(TINDER_USER_ID))
         Logger.log(f'TinderBot initialized for {self.user.name}')
 
-    def run(self):
+    def run(self, nr_profiles: int = 10):
         Logger.log('TinderBot is running')
 
-        for user in self.service.get_recommendations():
-            if user is None:
-                break
+        nr_profiles_checked = 0
+        while True:
+            # The function get_recommendations returns ±10 profiles, determined by Tinder
+            # We therefore need to call this function multiple times if we want to run
+            # the bot on more profiles.
+            for user in self.service.get_recommendations():
+                if user is None:
+                    break
 
-            action = self.profile_judge.like_or_nope(user)
-            if action == SwipeAction.like:
-                match = self.service.like(user)
-                if match:
-                    status = Status.matched
-                else:
-                    status = Status.liked
-                self._create_photo_cards(user, status)
-            elif action == SwipeAction.nope:
-                self.service.nope(user)
-                # In order to not look like a bot, we wait a random time around 1 second
-                # For like this is not necessary, since we create a photo collage for them,
-                # which takes a similar amount of time
-                time.sleep(random.uniform(0.7, 1.2))
-            elif action == SwipeAction.no_action:
-                # Explicitly do nothing
-                pass
+                nr_profiles_checked += 1
+                Logger.log(f'{nr_profiles_checked}/{nr_profiles}', level=1)
 
-            # break
+                self._like_or_nope(user)
 
-        Logger.log('TinderBot is finished')
+                if nr_profiles_checked >= nr_profiles:
+                    Logger.log('TinderBot is finished')
+                    return
 
     def analyze_photo_success_rate(self):
         """
@@ -80,6 +70,25 @@ class TinderBot:
             success_rate = photo.get('successRate')
             Logger.log(f'{url}: select rate = {select_rate}, success rate = {success_rate}', level=1)
 
+    def _like_or_nope(self, user: TinderUser) -> None:
+        action = self.profile_judge.like_or_nope(user)
+        if action == SwipeAction.like:
+            match = self.service.like(user)
+            if match:
+                status = Status.matched
+            else:
+                status = Status.liked
+            self._create_photo_cards(user, status)
+        elif action == SwipeAction.nope:
+            self.service.nope(user)
+            # In order to not look like a bot, we wait a random time around 1 second
+            # For like this is not necessary, since we create a photo collage for them,
+            # which takes a similar amount of time
+            time.sleep(random.uniform(0.7, 1.2))
+        elif action == SwipeAction.no_action:
+            # Explicitly do nothing
+            pass
+
     def _create_photo_cards(self, user: TinderUser, status: Status):
         collage_creator = CollageCreator()
         for photo_index, photo in enumerate(user.d['photos']):
@@ -92,4 +101,4 @@ if __name__ == '__main__':
     Logger.max_level = 1
     tinder_bot = TinderBot()
     # tinder_bot.analyze_photo_success_rate()
-    tinder_bot.run()
+    tinder_bot.run(nr_profiles=10)

@@ -1,4 +1,6 @@
-from typing import Dict, Union
+from typing import Any, Dict, Union
+
+TinderUserDict = Dict[str, Any]  # Dictionary representation of a Tinder User
 
 # {'crop_info': {'algo': {'height_pct': 0.17501609, 'width_pct': 0.16193028,
 #                         'x_offset_pct': 0.47167337, 'y_offset_pct': 0.21596518},
