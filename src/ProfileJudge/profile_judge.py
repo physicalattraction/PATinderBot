@@ -1,4 +1,5 @@
-from ProfileJudge.school_manager import ACTION_REQUIRED, APPROVED, SchoolManager
+from ProfileJudge.school_manager import SchoolManager
+from ProfileJudge.word_manager import ACTION_REQUIRED, APPROVED
 from enums import SwipeAction
 from tinder_user import TinderUser
 
