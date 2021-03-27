@@ -22,6 +22,7 @@ import time
 from ProfileJudge.profile_judge import ProfileJudge
 from collage_creator import CollageCreator
 from enums import Status, SwipeAction
+from logger import Logger
 from secrets import TINDER_USER_ID, get_from_secrets
 from tinder_service import TinderService
 from tinder_user import TinderUser
@@ -36,10 +37,10 @@ class TinderBot:
         self.profile_judge = ProfileJudge()
         self.service = TinderService()
         self.user = self.service.get_user(get_from_secrets(TINDER_USER_ID))
-        print(f'TinderBot initialized for {self.user.name}')
+        Logger.log(f'TinderBot initialized for {self.user.name}')
 
     def run(self):
-        print('Tinder bot is running')
+        Logger.log('TinderBot is running')
 
         for user in self.service.get_recommendations():
             if user is None:
@@ -53,35 +54,31 @@ class TinderBot:
                 else:
                     status = Status.liked
                 self._create_photo_cards(user, status)
-                # self._add_user_to_user_list(user, status)
             elif action == SwipeAction.nope:
                 self.service.nope(user)
                 # In order to not look like a bot, we wait a random time around 1 second
-                # For like this is not necessary, since we create photo collage for them,
+                # For like this is not necessary, since we create a photo collage for them,
                 # which takes a similar amount of time
                 time.sleep(random.uniform(0.7, 1.2))
-                # TODO: Refactor to have three user list objects, and append it to the correct one
-                # self._add_user_to_user_list(user, status=Status.noped)
             elif action == SwipeAction.no_action:
                 # Explicitly do nothing
                 pass
 
-            break
+            # break
 
-        print('Tinder bot is finished\n')
+        Logger.log('TinderBot is finished')
 
     def analyze_photo_success_rate(self):
         """
         Analyze the photo success rates of the user
         """
 
-        print('*** Photo analysis ***\n')
+        Logger.log('*** Photo analysis ***')
         for photo in self.user.photos:
             url = photo.get('url')
             select_rate = photo.get('selectRate')
             success_rate = photo.get('successRate')
-            print(f'{url}: select rate = {select_rate}, success rate = {success_rate}')
-        print('\n')
+            Logger.log(f'{url}: select rate = {select_rate}, success rate = {success_rate}', level=1)
 
     def _create_photo_cards(self, user: TinderUser, status: Status):
         collage_creator = CollageCreator()
@@ -92,5 +89,7 @@ class TinderBot:
 
 
 if __name__ == '__main__':
+    Logger.max_level = 1
     tinder_bot = TinderBot()
+    # tinder_bot.analyze_photo_success_rate()
     tinder_bot.run()

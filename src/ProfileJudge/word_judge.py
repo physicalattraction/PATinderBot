@@ -4,14 +4,12 @@ import string
 from abc import ABC
 from typing import Set
 
-# TODO: Turn into an Enum
-REJECTED = 0
-APPROVED = 1
-ACTION_REQUIRED = 2
+from ProfileJudge.enums import Vote
+from logger import Logger
 
 
 class WordListMixin:
-    # these files need to be set by the concrete implementations
+    # These files need to be set by the concrete implementations
     APPROVE_WORDS_FILE: str = None
     REJECT_WORDS_FILE: str = None
     REVIEW_WORDS_FILE: str = None
@@ -63,38 +61,33 @@ class WordListMixin:
                 json.dump([], f)
 
 
-class WordManager(WordListMixin, ABC):
+class WordJudge(WordListMixin, ABC):
     """
     Abstract base class that judges a specific field of the user's profiel based on individual words in it
     """
 
-    def __init__(self, verbosity: int = 0):
-        self.verbosity = verbosity
+    # This field name needs to be set by the concrete implementations
+    FIELD_NAME: str = None
 
-    def judge_by_words(self, name: str):
+    def judge_by_words(self, name: str) -> Vote:
+        assert self.FIELD_NAME is not None
+
         clean_name = name.lower()
         clean_name = ''.join(letter for letter in clean_name
                              if letter in string.ascii_lowercase + string.digits + ' ')
         words = clean_name.split(' ')
         if any(word in self.approve_words for word in words):
             # When any word is approved, we know it's a good school
-            if self.verbosity >= 1:
-                print(f'At least one word in name is approved: {name}')
-            return APPROVED
+            Logger.log(f'At least one word in {self.FIELD_NAME} is approved: {name}', level=3)
+            return Vote.approve
         elif all(word in self.reject_words for word in words):
             # When all words are rejected, we know it's a bad school
-            if self.verbosity >= 1:
-                print(f'All words in name are rejected: {name}')
-            return REJECTED
+            Logger.log(f'All words in {self.FIELD_NAME} are rejected: {name}', level=3)
+            return Vote.reject
         else:
             # In all other cases, we need to review the words and take no action
-            if self.verbosity >= 1:
-                print(f'All words in name are for review: {clean_name}')
+            Logger.log(f'All words in {self.FIELD_NAME} are for review: {clean_name}', level=3)
             for word in words:
                 if word not in self.reject_words:
                     self.add_word_for_review(word)
-            return ACTION_REQUIRED
-
-
-if __name__ == '__main__':
-    print(SchoolManager(verbosity=1).get_status({'name': 'PABO Amsterdam'}))
+            return Vote.review

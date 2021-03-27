@@ -1,6 +1,8 @@
-from ProfileJudge.school_manager import SchoolManager
-from ProfileJudge.word_manager import ACTION_REQUIRED, APPROVED
+from ProfileJudge.distance_judge import DistanceJudge
+from ProfileJudge.enums import Vote
+from ProfileJudge.school_judge import SchoolJudge
 from enums import SwipeAction
+from logger import Logger
 from tinder_user import TinderUser
 
 
@@ -10,41 +12,42 @@ class ProfileJudge:
     """
 
     def __init__(self):
-        self.school_manager = SchoolManager()
+        self.distance_judge = DistanceJudge()
+        self.school_judge = SchoolJudge()
 
     def like_or_nope(self, user: TinderUser) -> SwipeAction:
         """
-        Determine the SwipeAction for the given user
+        Determine the SwipeAction for the given user, based on votes from different judges
 
-        If there is at least one good school: like
-        If not, if there is at least one unknown school: no_action
-        If not: nope
-
-        # TODO: Check for bio
+        # TODO: Check for work and/or bio
         """
 
-        # Check for distance in km
-        if user.distance < 20:
-            # If less than 20 km, I want to check them out manually
-            print(f'To check out manually: {user}')
-            return SwipeAction.no_action
-        elif user.distance > 200:
-            # If outside The Netherlands, automatic reject
-            print(f'Distance too large for: {user}')
-            return SwipeAction.nope
+        Logger.log(f'Judging {user}', level=1)
 
-        # Check for schools the user went to. If she went to one of the approved schools,
-        # it's an automatic like. If there is at least unknown school, no action is taken,
-        # but the Bot user shall qualify the school in the schools file. If all schools are
-        # rejected, the user is rejected.
-        statuses = [self.school_manager.get_status(school) for school in user.schools]
-        if APPROVED in statuses:
-            print(f'Good school for {user}: {user.schools}. Action: {SwipeAction.like.value}')
-            return SwipeAction.like
-        elif ACTION_REQUIRED in statuses:
-            print(f'Unknown school for {user}: {user.schools}. Action: {SwipeAction.no_action.value}')
-            return SwipeAction.no_action
-        else:
-            # TODO: Fallthrough for when there is no school
-            print(f'No good school for {user}: {user.schools}. Action: {SwipeAction.nope.value}')
-            return SwipeAction.nope
+        # First check for distance, this can determine the action regardless of the other votex
+        distance_vote = self.distance_judge.vote(user)
+        if distance_vote == Vote.reject:
+            return self._action(SwipeAction.nope, 'Too far away.')
+        elif distance_vote == Vote.review:
+            return self._action(SwipeAction.no_action, 'Too close to automate.')
+
+        # Then check for schools
+        school_vote = self.school_judge.vote(user)
+        if school_vote == Vote.approve:
+            return self._action(SwipeAction.like, 'Good school found.')
+        elif school_vote == Vote.reject or school_vote == Vote.no_info:
+            return self._action(SwipeAction.nope, 'No good school found.')
+        elif school_vote == Vote.review:
+            return self._action(SwipeAction.no_action, 'Unknown school found.')
+
+    def _action(self, action: SwipeAction, reason: str):
+        Logger.log(f'Action: {action.value}. Reason: {reason}', level=1)
+        return action
+
+
+if __name__ == '__main__':
+    Logger.max_level = 3
+    ProfileJudge().like_or_nope(TinderUser({
+        'name': 'Tessa', 'distance_mi': 120, 'birth_date': '1986-04-03T00:00:00.000Z',
+        'schools': [{'name': 'PABO Amsterdam'}, {'name': 'MBO Amsterdam'}]
+    }))
