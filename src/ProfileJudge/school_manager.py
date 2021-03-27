@@ -1,9 +1,10 @@
 import json
 import os.path
 import string
-from typing import Dict, Set, Union
+from typing import Set
 
 import common
+from type_hinting import SchoolDict
 
 SCHOOLS_APPROVE_WORDS_FILE = os.path.join(common.get_dir('json'), 'school_approve_words.json')
 SCHOOLS_REJECT_WORDS_FILE = os.path.join(common.get_dir('json'), 'school_reject_words.json')
@@ -13,12 +14,6 @@ SCHOOLS_REVIEW_WORDS_FILE = os.path.join(common.get_dir('json'), 'school_review_
 REJECTED = 0
 APPROVED = 1
 ACTION_REQUIRED = 2
-
-# {
-#     'id': 131231,  # Ignored in this code
-#     'name': 'Amsterdam University'
-# }
-SchoolDict = Dict[str, Union[str, int]]
 
 
 class WordListMixin:

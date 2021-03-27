@@ -19,9 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import random
 import time
 
+from ProfileJudge.profile_judge import ProfileJudge
 from collage_creator import CollageCreator
 from enums import Status, SwipeAction
-from school_manager import ACTION_REQUIRED, APPROVED, SchoolManager
 from secrets import TINDER_USER_ID, get_from_secrets
 from tinder_service import TinderService
 from tinder_user import TinderUser
@@ -33,11 +33,10 @@ class TinderBot:
     _collage_creator: CollageCreator = None
 
     def __init__(self):
-        self.school_manager = SchoolManager()
-
+        self.profile_judge = ProfileJudge()
         self.service = TinderService()
         self.user = self.service.get_user(get_from_secrets(TINDER_USER_ID))
-        # analyze_photo_success_rate(self.user.photos)
+        print(f'TinderBot initialized for {self.user.name}')
 
     def run(self):
         print('Tinder bot is running')
@@ -46,7 +45,7 @@ class TinderBot:
             if user is None:
                 break
 
-            action = self._like_or_nope(user)
+            action = self.profile_judge.like_or_nope(user)
             if action == SwipeAction.like:
                 match = self.service.like(user)
                 if match:
@@ -67,46 +66,22 @@ class TinderBot:
                 # Explicitly do nothing
                 pass
 
-            # break
+            break
 
         print('Tinder bot is finished\n')
 
-    def _like_or_nope(self, user: TinderUser) -> SwipeAction:
+    def analyze_photo_success_rate(self):
         """
-        Determine the SwipeAction for the given user
-
-        If there is at least one good school: like
-        If not, if there is at least one unknown school: no_action
-        If not: nope
-
-        # TODO: Check for bio
+        Analyze the photo success rates of the user
         """
 
-        # Check for distance in km
-        if user.distance < 20:
-            # If less than 20 km, I want to check them out manually
-            print(f'To check out manually: {user}')
-            return SwipeAction.no_action
-        elif user.distance > 200:
-            # If outside The Netherlands, automatic reject
-            print(f'Distance too large for: {user}')
-            return SwipeAction.nope
-
-        # Check for schools the user went to. If she went to one of the approved schools,
-        # it's an automatic like. If there is at least unknown school, no action is taken,
-        # but the Bot user shall qualify the school in the schools file. If all schools are
-        # rejected, the user is rejected.
-        statuses = [self.school_manager.get_status(school) for school in user.schools]
-        if APPROVED in statuses:
-            print(f'Good school for {user}: {user.schools}. Action: {SwipeAction.like.value}')
-            return SwipeAction.like
-        elif ACTION_REQUIRED in statuses:
-            print(f'Unknown school for {user}: {user.schools}. Action: {SwipeAction.no_action.value}')
-            return SwipeAction.no_action
-        else:
-            # TODO: Fallthorugh for when there is no school
-            print(f'No good school for {user}: {user.schools}. Action: {SwipeAction.nope.value}')
-            return SwipeAction.nope
+        print('*** Photo analysis ***\n')
+        for photo in self.user.photos:
+            url = photo.get('url')
+            select_rate = photo.get('selectRate')
+            success_rate = photo.get('successRate')
+            print(f'{url}: select rate = {select_rate}, success rate = {success_rate}')
+        print('\n')
 
     def _create_photo_cards(self, user: TinderUser, status: Status):
         collage_creator = CollageCreator()
@@ -114,24 +89,6 @@ class TinderBot:
             if photo_index < self.MAX_NUMBER_OF_PHOTOS:
                 collage_creator.download_img(url=photo['url'])
         collage_creator.create_collage(user, status)
-
-    def _add_user_to_user_list(self, user: TinderUser, status: Status):
-        collage_creator = CollageCreator()
-        collage_creator.create_collage(user, status)
-
-
-def analyze_photo_success_rate(photos: [dict]):
-    """
-    Analyze the photo success rates of the user
-    """
-
-    print('*** Photo analysis ***\n')
-    for photo in photos:
-        url = photo.get('url')
-        select_rate = photo.get('selectRate')
-        success_rate = photo.get('successRate')
-        print(f'{url}: select rate = {select_rate}, success rate = {success_rate}')
-    print('\n')
 
 
 if __name__ == '__main__':

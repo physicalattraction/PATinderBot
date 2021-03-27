@@ -109,5 +109,4 @@ class TinderAuthenticator:
 
 
 if __name__ == '__main__':
-    authenticator = TinderAuthenticator()
-    authenticator.ensure_authentication()
+    TinderAuthenticator().ensure_authentication()
