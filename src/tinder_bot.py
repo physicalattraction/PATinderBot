@@ -75,6 +75,7 @@ class TinderBot:
         if action == SwipeAction.like:
             match = self.service.like(user)
             if match:
+                Logger.log("*** It's a match!! ***\n", level=1)
                 status = Status.matched
             else:
                 status = Status.liked
@@ -101,4 +102,4 @@ if __name__ == '__main__':
     Logger.max_level = 1
     tinder_bot = TinderBot()
     # tinder_bot.analyze_photo_success_rate()
-    tinder_bot.run(nr_profiles=10)
+    tinder_bot.run(nr_profiles=100)
