@@ -1,3 +1,4 @@
+from ProfileJudge.bio_judge import BioJudge
 from ProfileJudge.distance_judge import DistanceJudge
 from ProfileJudge.enums import Vote
 from ProfileJudge.school_judge import SchoolJudge
@@ -13,6 +14,7 @@ class ProfileJudge:
 
     def __init__(self):
         self.distance_judge = DistanceJudge()
+        self.bio_judge = BioJudge()
         self.school_judge = SchoolJudge()
 
     def like_or_nope(self, user: TinderUser) -> SwipeAction:
@@ -24,18 +26,23 @@ class ProfileJudge:
 
         Logger.log(f'Judging {user}', level=1)
 
-        # First check for distance, this can determine the action regardless of the other votex
+        # First check for distance, this can determine the action regardless of the other votes
         distance_vote = self.distance_judge.vote(user)
         if distance_vote == Vote.reject:
             return self._action(SwipeAction.nope, 'Too far away.')
         elif distance_vote == Vote.review:
             return self._action(SwipeAction.no_action, 'Too close to automate.')
 
+        # Then check for bio
+        bio_vote = self.bio_judge.vote(user)
+        if bio_vote == Vote.reject:
+            return self._action(SwipeAction.nope, 'No bio present.')
+
         # Then check for schools
         school_vote = self.school_judge.vote(user)
         if school_vote == Vote.approve:
             return self._action(SwipeAction.like, 'Good school found.')
-        elif school_vote == Vote.reject:
+        if school_vote == Vote.reject:
             return self._action(SwipeAction.nope, 'No good school found.')
         elif school_vote == Vote.no_info:
             return self._action(SwipeAction.nope, 'No school found.')

@@ -5,13 +5,16 @@ from tinder_user import TinderUser
 
 
 class DistanceJudge(VoteLoggerMixin):
+    DISTANCE_TO_REVIEW = 10  # Distance in km, users closer to this are neither accepted nor rejected, but up for review
+    DISTANCE_TO_REJECT = 200  # Distance in km, users further than this are rejected
+
     def vote(self, user: TinderUser) -> Vote:
         # Check for distance in km
         info = f'Distance = {user.distance} km'
-        if user.distance < 20:
+        if user.distance < self.DISTANCE_TO_REVIEW:
             # If less than 20 km, I want to check them out manually
             return self._vote(info, Vote.review, 'Inside Amsterdam')
-        elif user.distance > 200:
+        elif user.distance > self.DISTANCE_TO_REJECT:
             # If outside The Netherlands, automatic reject
             return self._vote(info, Vote.reject, 'Outside The Netherlands')
         else:

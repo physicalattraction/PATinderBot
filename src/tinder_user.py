@@ -181,7 +181,7 @@ class TinderUser:
         return f'{self.name} ({self.age}), {self.distance} km'
 
     def __str__(self) -> str:
-        return f'{self.name} ({self.age}), {self.distance} km'
+        return f'{self.name} ({self.age}), {self.distance} km, {self.bio}'
 
     def __repr__(self) -> str:
         return f'{self.name} ({self.age}), {self.distance} km'
