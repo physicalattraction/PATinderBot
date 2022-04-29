@@ -1,4 +1,4 @@
-from ProfileJudge.enums import Vote
+from ProfileJudge.vote import Vote
 from logger import Logger
 
 

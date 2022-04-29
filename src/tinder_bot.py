@@ -73,7 +73,6 @@ class TinderBot:
     def _like_or_nope(self, user: TinderUser) -> None:
         action = self.profile_judge.like_or_nope(user)
         if action == SwipeAction.like:
-            return
             match = self.service.like(user)
             if match:
                 Logger.log("*** It's a match!! ***\n", level=1)

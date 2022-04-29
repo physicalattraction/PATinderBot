@@ -1,4 +1,4 @@
-from ProfileJudge.enums import Vote
+from ProfileJudge.vote import Vote
 from ProfileJudge.vote_logger_mixin import VoteLoggerMixin
 from logger import Logger
 from tinder_user import TinderUser

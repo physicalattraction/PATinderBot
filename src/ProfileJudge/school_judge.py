@@ -1,7 +1,7 @@
 import os.path
 
 import common
-from ProfileJudge.enums import Vote
+from ProfileJudge.vote import Vote
 from ProfileJudge.vote_logger_mixin import VoteLoggerMixin
 from ProfileJudge.word_judge import WordJudge
 from logger import Logger
