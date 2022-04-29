@@ -37,7 +37,8 @@ class TinderAuthenticator:
         refresh_token = get_from_secrets(TINDER_REFRESH_TOKEN)
         if not refresh_token:
             phone_number = get_from_secrets(TINDER_PHONE_NUMBER)
-            self._send_otp_code(phone_number)
+            # TODO(auth): This is not working anymore
+            # self._send_otp_code(phone_number)
             otp_code = input('Please enter the code you have received by SMS: ')
             refresh_token = self._get_refresh_token(otp_code, phone_number)
 
@@ -60,10 +61,13 @@ class TinderAuthenticator:
         """
 
         url = f'{self.base_url}/v2/auth/sms/send'
+        # url = f'{self.base_url}/v3/auth/login'
         response = requests.post(url, headers=self.headers, params={'auth_type': 'sms'},
                                  json={'phone_number': phone_number})
         assert response.ok, response.text
         data = response.json()['data']
+        # TODO(auth): This is not working anymore
+        #             https://github.com/fbessez/Tinder/pull/117/files
         assert data['sms_sent'] is True, response.json()
 
     def _get_refresh_token(self, otp_code: str, phone_number: str) -> str:

@@ -16,8 +16,7 @@ https://gist.github.com/rtt/5a2e0cfa638c938cca59
 - Enjoy photo collages in folder `img` 
 
 ## Authentication
-
-The authentication should work automatically, however is broken at the moment. In `secrets.json` (not in the Git repository), there are three fields for authentication: your phone number, a refresh token and an access token. You should fill in the phone number (including the country code) as a string, as shown in the file `secrets_template.json`. The code makes an API call to request a One Time Password (OTP) which is received on your phone, and asks you for input it. However, this part is broken, the sms is never sent. Therefore, you need to take your phone, log out, log in there with phone number, obtain an OTP, and fetch a refresh token manually using this OTP.
+In `secrets.json` (not in the Git repository), there are three fields for authentication: your phone number, a refresh token and an access token. You should fill in the phone number (including the country code) as a string, as shown in the file `secrets_template.json`. The code makes an API call to request a One Time Password (OTP) which is received on your phone, and asks you for input it. However, this part is broken, the sms is never sent. Therefore, we skip the API call to send an SMS with an OTP, and you need to take your phone, log out, log in there with phone number, to obtain an OTP. Use this to automatically fetch a refresh token.
 
 ## School selection
 
