@@ -5,8 +5,8 @@ from tinder_user import TinderUser
 
 
 class DistanceJudge(VoteLoggerMixin):
-    DISTANCE_TO_REVIEW = 10  # Distance in km, users closer to this are neither accepted nor rejected, but up for review
-    DISTANCE_TO_REJECT = 200  # Distance in km, users further than this are rejected
+    DISTANCE_TO_REVIEW = 0  # Distance in km, users closer to this are neither accepted nor rejected, but up for review
+    DISTANCE_TO_REJECT = 150  # Distance in km, users further than this are rejected
 
     def vote(self, user: TinderUser) -> Vote:
         # Check for distance in km

@@ -55,7 +55,6 @@ class TinderBot:
                 self._like_or_nope(user)
 
                 if nr_profiles_checked >= nr_profiles:
-                    Logger.log(f'TinderBot is finished. Liked today: {CollageCreator().nr_liked_today}.')
                     return
 
     def analyze_photo_success_rate(self):
@@ -102,4 +101,7 @@ if __name__ == '__main__':
     Logger.max_level = 1
     tinder_bot = TinderBot()
     # tinder_bot.analyze_photo_success_rate()
-    tinder_bot.run(nr_profiles=1000)
+    try:
+        tinder_bot.run(nr_profiles=100)
+    finally:
+        Logger.log(f'TinderBot is finished. Liked today: {CollageCreator().nr_liked_today}.')

@@ -4,45 +4,53 @@ import string
 from abc import ABC
 from typing import Set
 
+import common
 from ProfileJudge.vote import Vote
 from logger import Logger
 
 
 class WordListMixin:
-    # These files need to be set by the concrete implementations
-    APPROVE_WORDS_FILE: str = None
-    REJECT_WORDS_FILE: str = None
-    REVIEW_WORDS_FILE: str = None
+    # This field name needs to be set by the concrete implementations
+    FIELD_NAME: str = None
 
     _approve_words: Set[str] = None
     _reject_words: Set[str] = None
     _review_words: Set[str] = None
 
     @property
+    def approve_words_file(self) -> str:
+        return os.path.join(common.get_dir('json'), f'{self.FIELD_NAME}_approve_words.json')
+
+    @property
+    def reject_words_file(self) -> str:
+        return os.path.join(common.get_dir('json'), f'{self.FIELD_NAME}_reject_words.json')
+
+    @property
+    def review_words_file(self) -> str:
+        return os.path.join(common.get_dir('json'), f'{self.FIELD_NAME}_review_words.json')
+
+    @property
     def approve_words(self):
-        assert self.APPROVE_WORDS_FILE is not None
-        if not self._approve_words:
-            self._approve_words = self._read_file(self.APPROVE_WORDS_FILE)
+        if self._approve_words is None:
+            self._approve_words = self._read_file(self.approve_words_file)
         return self._approve_words
 
     @property
     def reject_words(self):
-        assert self.REJECT_WORDS_FILE is not None
-        if not self._reject_words:
-            self._reject_words = self._read_file(self.REJECT_WORDS_FILE)
+        if self._reject_words is None:
+            self._reject_words = self._read_file(self.reject_words_file)
         return self._reject_words
 
     @property
     def review_words(self):
-        assert self.REVIEW_WORDS_FILE is not None
-        if not self._review_words:
-            self._review_words = self._read_file(self.REVIEW_WORDS_FILE)
+        if self._review_words is None:
+            self._review_words = self._read_file(self.review_words_file)
         return self._review_words
 
     def add_word_for_review(self, value: str):
         if value not in self.review_words:
             self._review_words.add(value)
-            with open(self.REVIEW_WORDS_FILE, 'w') as f:
+            with open(self.review_words_file, 'w') as f:
                 json.dump(sorted(self._review_words), f, indent=2)
 
     def _read_file(self, filepath: str) -> Set[str]:
@@ -65,9 +73,6 @@ class WordJudge(WordListMixin, ABC):
     """
     Abstract base class that judges a specific field of the user's profiel based on individual words in it
     """
-
-    # This field name needs to be set by the concrete implementations
-    FIELD_NAME: str = None
 
     def judge_by_words(self, name: str) -> Vote:
         assert self.FIELD_NAME is not None

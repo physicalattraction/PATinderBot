@@ -1,5 +1,6 @@
 from ProfileJudge.bio_judge import BioJudge
 from ProfileJudge.distance_judge import DistanceJudge
+from ProfileJudge.name_judge import NameJudge
 from ProfileJudge.school_judge import SchoolJudge
 from ProfileJudge.vote import Vote
 from enums import SwipeAction
@@ -13,6 +14,7 @@ class ProfileJudge:
     """
 
     def __init__(self):
+        self.name_judge = NameJudge()
         self.distance_judge = DistanceJudge()
         self.bio_judge = BioJudge()
         self.school_judge = SchoolJudge()
@@ -21,12 +23,19 @@ class ProfileJudge:
         """
         Determine the SwipeAction for the given user, based on votes from different judges
 
-        # TODO: Check for work and/or bio
+        # TODO: Check for work
         """
 
         Logger.log(f'Judging {user}', level=1)
 
-        # First check for distance, this can determine the action regardless of the other votes
+        # First, check on name. This can lead to an instant like
+        name_vote = self.name_judge.vote(user)
+        if name_vote == Vote.approve:
+            return self._action(SwipeAction.like, 'Name match.')
+        elif name_vote == Vote.reject:
+            return self._action(SwipeAction.nope, 'Name mismatch.')
+
+        # Then check for distance, this can determine the action regardless of the other votes
         distance_vote = self.distance_judge.vote(user)
         if distance_vote == Vote.reject:
             return self._action(SwipeAction.nope, 'Too far away.')

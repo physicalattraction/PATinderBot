@@ -10,9 +10,9 @@ from type_hinting import SchoolDict
 
 
 class SchoolJudge(VoteLoggerMixin, WordJudge):
-    APPROVE_WORDS_FILE = os.path.join(common.get_dir('json'), 'school_approve_words.json')
-    REJECT_WORDS_FILE = os.path.join(common.get_dir('json'), 'school_reject_words.json')
-    REVIEW_WORDS_FILE = os.path.join(common.get_dir('json'), 'school_review_words.json')
+    approve_words_file = os.path.join(common.get_dir('json'), 'school_approve_words.json')
+    reject_words_file = os.path.join(common.get_dir('json'), 'school_reject_words.json')
+    review_words_file = os.path.join(common.get_dir('json'), 'school_review_words.json')
 
     FIELD_NAME = 'school'
 
