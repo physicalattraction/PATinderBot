@@ -102,6 +102,6 @@ if __name__ == '__main__':
     tinder_bot = TinderBot()
     # tinder_bot.analyze_photo_success_rate()
     try:
-        tinder_bot.run(nr_profiles=100)
+        tinder_bot.run(nr_profiles=1000)
     finally:
         Logger.log(f'TinderBot is finished. Liked today: {CollageCreator().nr_liked_today}.')
